@@ -34,6 +34,8 @@ setup(
             'press_test = cobot1.press_test:main',
             'plate_setting_test = cobot1.plate_setting_test:main',
             'spatula_test = cobot1.spatula_test:main',
+            'dough_to_plate = cobot1.dough_to_plate:main',
+            'source_test = cobot1.source_test:main',
             'main = cobot1.main:main'
         ],
     },

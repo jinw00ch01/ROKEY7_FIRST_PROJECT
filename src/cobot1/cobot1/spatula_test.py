@@ -105,7 +105,7 @@ def perform_task_spatula():
     anchor_pos_0 = posx([316, -110, 350, 94, -162, -177])
     anchor_pos_1 = posx([316, -145, 255, 94, -162, -177])
     anchor_pos_2 = posx([312, -114, 317, 94, -163, -179])
-    
+    posx([312, -122, 312, 97, -161, -179])
     
     
     # 바닥까지 하강 전의 뒤집개
@@ -122,11 +122,6 @@ def perform_task_spatula():
 
     # 반죽을 집고 Z축으로 이동
     pos4 = posx([321, 64, 209, 91, -132, 177])
-
-
-
-
-
 
 
     # x축으로 이동하기 전 - 회전
@@ -184,19 +179,7 @@ def perform_task_spatula():
     release_force()
     release_compliance_ctrl()
 
-    # movel(pos5, vel=190, acc=ACC)
-
-
-    # Grip 및 Release 반복
-    #while rclpy.ok():
-    #    grip_20mm()
-    #    wait(1.5)
-    #    grip_12mm()
-    #    wait(1.5)
-    #    release_65mm()
-    #    wait(1.5)
-    #    release_90mm()
-    #    wait(1.5)
+    movel(pos5, vel=190, acc=ACC)
 
 def main(args=None):
     """메인 함수: ROS2 노드 초기화 및 동작 수행"""

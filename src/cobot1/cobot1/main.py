@@ -11,6 +11,7 @@ from cobot1.dough_grip_test import perform_task_dough_grip
 from cobot1.press_test import perform_task_press
 from cobot1.plate_setting_test import perform_task_plate_setting
 from cobot1.spatula_test import perform_task_spatula
+from cobot1.dough_to_plate import perform_task_dough_to_plate
 
 # 로봇 설정 상수
 ROBOT_ID = "dsr01"
@@ -156,10 +157,11 @@ def main(args=None):
         setup_io_clients(node)
 
         # 각 파일에서 import한 작업 함수를 순서대로 수행
-        perform_task_dough_grip()
-        perform_task_press()
-        perform_task_plate_setting()
+        #perform_task_dough_grip()
+        #perform_task_press()
+        #perform_task_plate_setting()
         perform_task_spatula()
+        perform_task_dough_to_plate()
 
     except KeyboardInterrupt:
         print("\nNode interrupted by user. Shutting down...")
