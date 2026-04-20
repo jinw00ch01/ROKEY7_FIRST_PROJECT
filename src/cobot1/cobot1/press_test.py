@@ -102,7 +102,7 @@ def initialize_robot():
     print("#" * 50)
 
 
-def perform_task():
+def perform_task_press():
     """누르기 작업 수행"""
     print("Performing press task...")
     from DSR_ROBOT2 import (
@@ -230,7 +230,8 @@ def main(args=None):
     try:
         initialize_robot()
         setup_io_clients(node)
-        perform_task()
+        perform_task_press()
+
     except KeyboardInterrupt:
         print("\nNode interrupted by user. Shutting down...")
     except Exception as e:

@@ -45,7 +45,7 @@ def initialize_robot():
 
 
 
-def perform_task():
+def perform_task_spatula():
     """로봇이 수행할 작업"""
     print("Performing grip task...")
     from DSR_ROBOT2 import (
@@ -209,7 +209,7 @@ def main(args=None):
     # 초기화는 한 번만 수행
     initialize_robot()
 
-    perform_task()
+    perform_task_spatula()
     
     rclpy.shutdown()
 

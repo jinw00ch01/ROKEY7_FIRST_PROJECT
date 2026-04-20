@@ -45,7 +45,7 @@ def initialize_robot():
     print("#" * 50)
 
 
-def perform_task():
+def perform_task_dough_grip():
     """접시 세팅 작업 수행"""
     print("Performing plate setting task...")
     from DSR_ROBOT2 import (
@@ -187,7 +187,7 @@ def main(args=None):
     # 초기화는 한 번만 수행
     initialize_robot()
 
-    perform_task()
+    perform_task_dough_grip()
 
     rclpy.shutdown()
 

@@ -26,13 +26,15 @@ setup(
         'console_scripts': [
             'move_basic = cobot1.move_basic:main',
             'move_periodic = cobot1.move_periodic:main',
-            'grip_test = cobot1.grip_test:main',
             'force_test = cobot1.force_test:main',
-            'press_test = cobot1.press_test:main',
             'surveon = cobot1.surveon:main',
             'mini_jog = dsr_rokey2.mini_jog:main',
+
+            'dough_grip_test = cobot1.dough_grip_test:main',
+            'press_test = cobot1.press_test:main',
             'plate_setting_test = cobot1.plate_setting_test:main',
-            'dough_grip_test = cobot1.dough_grip_test:main'
+            'spatula_test = cobot1.spatula_test:main',
+            'main = cobot1.main:main'
         ],
     },
 )

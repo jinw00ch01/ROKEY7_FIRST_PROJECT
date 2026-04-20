@@ -1,3 +1,7 @@
 build/
 install/
 log/
+
+# Firebase 인증 키 (절대 커밋하면 안됨)
+*.json
+!package.json
