@@ -155,7 +155,7 @@ def perform_task_press():
     pos_tool_pickup_2 = posx([563, -5, 64, 7, -179, 8])
 
     pos_above_dough = posx([316, -85, 153, 166, 179, 167])     # 반죽 위 위치    
-    pos_press_down = posx([316, -85, 70, 166, 179, 167])       # Z축 하강 목표 (충분히 낮게 설정)
+    pos_press_down = posx([316, -85, 80, 166, 179, 167])       # Z축 하강 목표 (충분히 낮게 설정)
     pos_lift_up = posx([316, -85, 120, 166, 179, 167])         # 들어올리기 위치
 
 
@@ -218,6 +218,8 @@ def perform_task_press():
     movel(pos_tool_pickup_2, vel=VELOCITY, acc=ACC)
     release_65mm()
     # print("요구사항 3번까지 완료! (릴리스 → 도구 위치 이동 → 그립)")
+
+    movel(pos_tool_pickup_1, vel=VELOCITY, acc=ACC)
 
 
 def main(args=None):

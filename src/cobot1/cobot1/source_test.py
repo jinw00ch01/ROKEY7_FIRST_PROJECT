@@ -92,10 +92,10 @@ def perform_task_source():
     """소스 뿌리기 작업 수행"""
     print("Performing powder/sauce task...")
     from DSR_ROBOT2 import (
-        posx, movej, movel, wait,
+        posx, movej, movel, move_spiral, amove_spiral, wait, mwait,
         task_compliance_ctrl, release_compliance_ctrl,
         set_desired_force, release_force,
-        DR_AXIS_Z, DR_BASE, DR_FC_MOD_ABS, DR_TOOL,
+        DR_AXIS_Z, DR_BASE, DR_FC_MOD_ABS, DR_TOOL
     )
 
     # 디지털 입력 신호 대기 함수
@@ -123,6 +123,12 @@ def perform_task_source():
         set_digital_output(2, OFF)
         set_digital_output(1, ON)
 
+    def grip_40mm():
+        print("grip_40mm Gripping...")
+        set_digital_output(3, ON)
+        set_digital_output(2, OFF)
+        set_digital_output(1, ON)
+
     def grip_12mm():
         print("grip_12mm Gripping...")
         set_digital_output(3, OFF)
@@ -131,26 +137,16 @@ def perform_task_source():
 
     # ===== 위치 정의 (실제 환경에 맞게 수정 필요) =====
     JReady = [0, 0, 90, 0, 90, 0]
-    JReady_1 = [35, 17, 113, -61, 109, 45] # posx([335, -113, 243, 91, -96, 87])
-    JReady_2 = posx([335, -73, 273, 91, -96, 87])
-    JReady_3 = posx([335, -143, 213, 91, -96, 87])
+    # posx([367, 4, 194, 27, -179, 28])
+
     # 소스통 위치 (소스통이 놓여있는 곳)
-    # pos_bottle_above = posx([400, 200, 200, 0, -180, 0])     # 소스통 위 접근 위치
-    #pos_bottle_pick = posx([400, 200, 100, 0, -180, 0])      # 소스통 그립 위치
+    bottle1 = posx([356, 410, 216, 94, 94, 88])
+    bottle2 = posx([356, 440, 216, 94, 94, 88])
+    bottle2_J = [12, 21, 116, 93, 81, -49]
 
-    # 서빙 접시 위 위치 (정위치, 출구가 위를 향한 상태)
-    #pos_plate_above = posx([300, -80, 250, 0, -180, 0])
-
-    # 소스통 뒤집은 상태 (출구가 아래로, B축 약 180도 회전)
-    #pos_plate_flipped = posx([300, -80, 250, 0, 0, 0])
-
-    # 소스 뿌리기 경로 (뒤집은 상태에서 XY 평면으로 이동하며 뿌림)
-    #pos_pour_start = posx([280, -100, 230, 0, 0, 0])
-    #pos_pour_mid = posx([300, -60, 230, 0, 0, 0])
-    #pos_pour_end = posx([320, -80, 230, 0, 0, 0])
-
-    #POUR_VEL = 30    # 뿌리기 시 느린 속도
-    #POUR_ACC = 30
+    # 접시 위치
+    plate1 = posx([823, -201, 280, 139, -93, -89])
+    plate2 = posx([823, -201, 280, 139, -93, 90])
 
     # ===== 1단계: 소스통 잡고 들어올리기 =====
     #print("[Step 1] 소스통 위치로 이동 및 그리핑")
@@ -159,19 +155,30 @@ def perform_task_source():
     release_90mm()
 
     movej(JReady, vel=VELOCITY, acc=ACC)
-    #movel(pos_bottle_above, vel=VELOCITY, acc=ACC)
-    #movel(pos_bottle_pick, vel=80, acc=ACC)
 
-    release_65mm()
+
+    movel(bottle1, vel=VELOCITY, acc=ACC)   
+    movel(bottle2, vel=VELOCITY, acc=ACC)
+    grip_40mm()
+
+
+    movel(plate1, vel=VELOCITY, acc=ACC)
+    movel(plate2, vel=VELOCITY, acc=ACC)
+
+    # 소스 뿌리기 구현
+    grip_20mm()
+    move_spiral(rev=3,rmax=10.0,lmax=-10,v=40,a=40,axis=DR_AXIS_Z, ref=DR_BASE)
     wait(0.5)
+    move_spiral(rev=3,rmax=10.0,lmax=-10,v=40,a=40,axis=DR_AXIS_Z, ref=DR_BASE)
+    mwait(0.5)
 
-    movej(JReady_1, vel=VELOCITY, acc=ACC)
+    # 소스통 귀환
+    movel(plate1, vel=VELOCITY, acc=ACC)
 
-    #grip_20mm()
+    movej(bottle2_J, vel=VELOCITY, acc=ACC)
 
-    movel(JReady_2, vel=VELOCITY, acc=ACC)
-
-    movel(JReady_3, vel=VELOCITY, acc=ACC)
+    release_90mm()
+    movel(bottle1, vel=VELOCITY, acc=ACC)
 
 
     #release_65mm()

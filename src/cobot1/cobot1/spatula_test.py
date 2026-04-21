@@ -102,84 +102,117 @@ def perform_task_spatula():
 
     release_65mm()
 
-    anchor_pos_0 = posx([316, -110, 350, 94, -162, -177])
-    anchor_pos_1 = posx([316, -145, 255, 94, -162, -177])
-    anchor_pos_2 = posx([312, -114, 317, 94, -163, -179])
-    posx([312, -122, 312, 97, -161, -179])
+    # 뒤집개 집기 전 z축 이동방향
+    anchor_pos_0 = posx([372, -349, 168, 28, -172, 151])
+
+    # 뒤집개 집기 위치
+    anchor_pos_1 = posx([372, -349, 128, 28, -172, 151])
+
+    # 뒤집개 뽑는 위치
+    anchor_pos_2 = posx([372, -349, 315, 28, -172, 151])
     
     
     # 바닥까지 하강 전의 뒤집개
-    pos1 = posx([321, 107, 271, 94, -163, -179])
+    down_1 = posx([315, 140, 223, 89, -143, -178])
+    # 바닥까지 하강 전 미들 포인트
+    down_2 = posx([335, 144, 159, 86, -129, -175])
+    # 바닥까지 하강하는 뒤집개 
+    down_3 = posx([339, 129, 120, 87, -127, -178])
 
 
-    pos1_2 = posx([316, 163, 188, 87, -134, 177])
 
-    # 바닥까지 하강하는 뒤집개 119
-    pos2 = posx([321, 169, 119, 91, -132, 177])
-
-    # 바닥에서 Y축으로 이동 y=149
-    pos3 = posx([321, 64, 119, 91, -132, 177])
+    # 바닥에서 Y축으로 이동 
+    grill_1 = posx([339, 9, 120, 87, -127, -178])
 
     # 반죽을 집고 Z축으로 이동
-    pos4 = posx([321, 64, 209, 91, -132, 177])
 
 
-    # x축으로 이동하기 전 - 회전
-    pos5 = posx([317, 131, 135, 90, -108, 175])
+    # 스윙 전
+    swing_1 = posx([326, 80, 50, 90, -92, 179])
 
-    # x축으로 이동
-    pos6 = posx([286, 111, 117, 84, -101, 124])
+    # 스윙 중간
+    swing_2 = posx([326, 80, 40, 90, -92, 140])
 
-    pos7 = posx([330, 113, 158, 92, -95, 131])
+    # 스윙 후
+    swing_3 = posx([463, 78, 60, 90, -93, 32])
 
 
-    #pos2 = posx([338, 95, 100, 89, -129, 175])
-    # X=338.54, Y=173.24, Z=129.04, A=89.42, B=-129.60, C=175.40
 
-    # pos3 = posx([324, 90, 144, 83, -100, 63])
-    #[50, 30, 91, -39, 120, 44]
+    # 스윕 준비 z축 이동
+    sweep_1 = posx([234, 34, 154, 88, -113, -177])
 
-    # pos4 = posx([374, 90, 144, 83, -100, 63])
+    # 스윕 준비 - 바닥
+    sweep_2 = posx([234, 34, 70, 88, -113, -177])
 
-    # pos5 = posx([350, 69, 190, 85, -107, 79])
-
-    movej(JReady, vel=VELOCITY, acc=ACC)
+    # 스윕1 - 중간점
+    sweep_3 = posx([327, 80, 70, 88, -113, -177])
+    # 스윕2
+    sweep_4 = posx([430, 137, 70, 88, -113, -177])
+    # 스윕3
+    sweep_5 = posx([430, 36, 70, 88, -113, -177])
     
-    movel(anchor_pos_0, vel=100, acc=100)
-    movel(anchor_pos_1, vel=100, acc=100)
+
+    lift_up = posx([430, 36, 297, 88, -113, -177])
+
+    plate_up = posx([690, -98, 252, 119, -109, -175])
+
+    plate_down = posx([690, -98, 252, 119, -109, 91])
+
+    back_home = posx([342, -141, 355, 94, -122, 85])
+
+    #movej(JReady, vel=150, acc=100)
+    
+    movel(anchor_pos_0, vel=150, acc=100)
+    movel(anchor_pos_1, vel=150, acc=100)
 
     grip_12mm()
     wait(0.5)
   
 
-    movel(anchor_pos_2, vel=100, acc=100)
+    movel(anchor_pos_2, vel=150, acc=100)
 
     task_compliance_ctrl(stx=[3000, 3000, 100, 100, 100, 100])
     fd = [0, 0, 20, 0, 0, 0] #x,y,z,rx,ry,rz
     fctrl_dir= [0, 0, 1, 0, 0, 0] #z축 기준
     set_desired_force(fd, dir=fctrl_dir, mod=DR_FC_MOD_ABS)  
 
-    movel(pos1, vel=VELOCITY, acc=ACC)
+    movel(down_1, vel=150, acc=ACC)
+    movel(down_2, vel=VELOCITY, acc=ACC)
+    movel(down_3, vel=VELOCITY, acc=ACC)
 
-    movel(pos1_2, vel=VELOCITY, acc=ACC)
+    movel(grill_1, vel=VELOCITY, acc=ACC)
 
-    movel(pos2, vel=VELOCITY, acc=ACC)
-
-    movel(pos3, vel=100, acc=ACC)
-
-    movel(pos4, vel=100, acc=ACC) 
+    movel(swing_1, vel=100, acc=150)
+    movel(swing_2, vel=100, acc=150)
+    movel(swing_3, time=0.6)
     
-    movel(pos5, vel=100, acc=ACC)
-    
-    movel(pos6, vel=100, acc=ACC)
-
-    movel(pos7, vel=100, acc=ACC)
-
+    movel(sweep_1, vel=VELOCITY, acc=ACC)
+    movel(sweep_2, vel=VELOCITY, acc=ACC)
+    movel(sweep_3, vel=VELOCITY, acc=ACC)
+    movel(sweep_4, vel=VELOCITY, acc=ACC)
+    movel(sweep_5, vel=VELOCITY, acc=ACC)
 
     release_force()
     release_compliance_ctrl()
 
-    movel(pos5, vel=190, acc=ACC)
+    movel(lift_up, vel=VELOCITY, acc=ACC)
+    movel(plate_up, vel=VELOCITY, acc=ACC)
+    movel(plate_down, time=0.4)
+
+    movel(back_home, vel=VELOCITY, acc=ACC)
+
+    movel(anchor_pos_2, vel=VELOCITY, acc=ACC)
+    movel(anchor_pos_1, vel=VELOCITY, acc=ACC)
+    release_65mm()
+    movel(anchor_pos_0, vel=VELOCITY, acc=ACC)
+
+    
+
+
+
+
+
+
 
 def main(args=None):
     """메인 함수: ROS2 노드 초기화 및 동작 수행"""

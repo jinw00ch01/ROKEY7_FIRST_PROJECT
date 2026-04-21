@@ -124,19 +124,6 @@ def perform_task_powder_snap():
         set_digital_output(2, ON)
         set_digital_output(1, ON)
 
-    # Snap 동작: 빠르게 grip → release → grip 반복하여 가루를 털어냄
-    def snap_grip(count=3, interval=0.3):
-        """그리퍼를 빠르게 grip/release 반복하여 가루를 뿌림"""
-        for i in range(count):
-            print(f"  Snap {i+1}/{count}")
-            grip_12mm()       # 세게 쥐기 (충격)
-            wait(interval)
-            grip_20mm()       # 살짝 느슨하게 (가루 배출)
-            wait(interval)
-        # snap 후 다시 안정적으로 잡기
-        grip_20mm()
-        wait(0.3)
-
     # ===== 위치 정의 (실제 환경에 맞게 수정 필요) =====
     JReady = [0, 0, 90, 0, 90, 0]
 
@@ -152,10 +139,11 @@ def perform_task_powder_snap():
 
     # ===== 1단계: 가루통 잡고 들어올리고 서빙할 접시 위로 이동 =====
     print("[Step 1] 가루통 잡고 들어올려서 접시 위로 이동")
-    release_65mm()
+    release_90mm()
     wait(0.3)
 
     movej(JReady, vel=VELOCITY, acc=ACC)
+
     movel(pos_bottle_above, vel=VELOCITY, acc=ACC)
     movel(pos_bottle_pick, vel=80, acc=ACC)
 
@@ -176,7 +164,7 @@ def perform_task_powder_snap():
 
     # ===== 3단계: Snap으로 가루 뿌리기 =====
     print("[Step 3] 그리퍼 snap으로 가루 뿌리기")
-    snap_grip(count=3, interval=0.3)
+    
     print("  -> 가루 뿌리기 완료")
 
     # ===== 4단계: 가루통 원위치로 회전 (출구가 위로) =====
