@@ -12,7 +12,7 @@ ROBOT_TOOL = "Tool Weight"
 ROBOT_TCP = "GripperDA_v1"
 
 # 이동 속도 및 가속도
-VELOCITY = 150
+VELOCITY = 100
 ACC = 100
 
 # 디지털 출력 상태
@@ -90,7 +90,7 @@ def perform_task_powder_snap():
     """가루 뿌리기 작업 수행 (snap 방식)"""
     print("Performing powder snap task...")
     from DSR_ROBOT2 import (
-        posx, movej, movel, wait,
+        posx, movej, movel, wait, move_periodic, DR_BASE
     )
 
     # 디지털 입력 신호 대기 함수
@@ -128,31 +128,37 @@ def perform_task_powder_snap():
     JReady = [0, 0, 90, 0, 90, 0]
 
     # 가루통 위치 (가루통이 놓여있는 곳)
-    pos_bottle_above = posx([400, 200, 200, 0, -180, 0])     # 가루통 위 접근 위치
-    pos_bottle_pick = posx([400, 200, 100, 0, -180, 0])      # 가루통 그립 위치
 
-    # 서빙 접시 위 위치 (출구가 위를 향한 상태)
-    pos_plate_above = posx([300, -80, 250, 0, -180, 0])
+    pos_bottle_lift_j = [-17, 25, 79, -95, 66, 12] # posx([559, -475, 163, 97, -97, -87])      # 가루통 그립 전
+    pos_bottle_lift_l = posx([543, -506, 408, 96, -90, 86])
+
+    pos_bottle_pick_j = [-17, 33, 90, -103, 69, 33] 
+    pos_bottle_pick_l = posx([543, -506, 264, 96, -90, 86])     # 가루통 그립 위치
+
+    # 서빙 접시 위 위치 (출구가 위를 향한 상태) - 가루 털기 전
+    pos_plate_above = posx([826, -169, 219, 4, 99, -140])
 
     # 가루통 뒤집은 상태 (출구가 아래로, B축 180도 회전)
-    pos_plate_flipped = posx([300, -80, 250, 0, 0, 0])
+    pos_plate_flipped = posx([826, -169, 219, 4, 99, 89])
 
     # ===== 1단계: 가루통 잡고 들어올리고 서빙할 접시 위로 이동 =====
     print("[Step 1] 가루통 잡고 들어올려서 접시 위로 이동")
     release_90mm()
-    wait(0.3)
+    wait(0.5)
 
     movej(JReady, vel=VELOCITY, acc=ACC)
 
-    movel(pos_bottle_above, vel=VELOCITY, acc=ACC)
-    movel(pos_bottle_pick, vel=80, acc=ACC)
+    movej(pos_bottle_lift_j, vel=VELOCITY, acc=ACC)
 
-    grip_20mm()
+    movel(pos_bottle_pick_l, vel=80, acc=ACC)
     wait(0.5)
+
+    release_65mm()
+    wait(0.5)
+    movel(pos_bottle_lift_l, vel=80, acc=ACC)
+
     print("  -> 가루통 그립 완료")
 
-    # 가루통 들어올리기
-    movel(pos_bottle_above, vel=VELOCITY, acc=ACC)
 
     # 서빙 접시 위로 이동
     movel(pos_plate_above, vel=VELOCITY, acc=ACC)
@@ -160,28 +166,26 @@ def perform_task_powder_snap():
     # ===== 2단계: 가루통 뒤집기 (출구가 아래로, B축 0도 = 180도 회전) =====
     print("[Step 2] 가루통 뒤집기 (출구 아래로, B축 0도)")
     movel(pos_plate_flipped, vel=80, acc=ACC)
-    wait(0.5)
 
     # ===== 3단계: Snap으로 가루 뿌리기 =====
     print("[Step 3] 그리퍼 snap으로 가루 뿌리기")
-    
+    move_periodic(amp=[0, 0, 30, 0, 0, 0], period=[0, 0, 1, 0, 0, 0], atime=0.5, repeat=5, ref=DR_BASE)
     print("  -> 가루 뿌리기 완료")
 
     # ===== 4단계: 가루통 원위치로 회전 (출구가 위로) =====
     print("[Step 4] 가루통 원위치 회전 (출구 위로, B축 -180도)")
     movel(pos_plate_above, vel=80, acc=ACC)
-    wait(0.3)
 
     # ===== 5단계: 가루통을 원래 위치에 되돌려놓기 =====
     print("[Step 5] 가루통 원래 위치로 복귀")
-    movel(pos_bottle_above, vel=VELOCITY, acc=ACC)
-    movel(pos_bottle_pick, vel=80, acc=ACC)
+    movel(pos_bottle_lift_l, vel=VELOCITY, acc=ACC)
 
-    release_65mm()
-    wait(0.5)
+    
+    movel(pos_bottle_pick_l, vel=80, acc=ACC)
+    release_90mm()
+    
     print("  -> 가루통 릴리스 완료")
-
-    movel(pos_bottle_above, vel=VELOCITY, acc=ACC)
+    movel(pos_bottle_lift_l, vel=VELOCITY, acc=ACC)
 
     # 초기 위치로 복귀
     movej(JReady, vel=VELOCITY, acc=ACC)

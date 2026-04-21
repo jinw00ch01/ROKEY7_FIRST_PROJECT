@@ -57,6 +57,7 @@ def perform_task_spatula():
         amovel,
         task_compliance_ctrl, release_compliance_ctrl,
         set_desired_force, release_force,
+        check_motion, get_tool_force,
         DR_AXIS_Z, DR_BASE, DR_FC_MOD_ABS, DR_TOOL
     )
 
@@ -103,13 +104,10 @@ def perform_task_spatula():
     release_65mm()
 
     # 뒤집개 집기 전 z축 이동방향
-    anchor_pos_0 = posx([372, -349, 168, 28, -172, 151])
-
+    anchor_pos_0 = posx([372, -356, 210, 32, -172, 154])
+    
     # 뒤집개 집기 위치
-    anchor_pos_1 = posx([372, -349, 128, 28, -172, 151])
-
-    # 뒤집개 뽑는 위치
-    anchor_pos_2 = posx([372, -349, 315, 28, -172, 151])
+    anchor_pos_1 = posx([372, -356, 99, 32, -172, 154])
     
     
     # 바닥까지 하강 전의 뒤집개
@@ -117,12 +115,12 @@ def perform_task_spatula():
     # 바닥까지 하강 전 미들 포인트
     down_2 = posx([335, 144, 159, 86, -129, -175])
     # 바닥까지 하강하는 뒤집개 
-    down_3 = posx([339, 129, 120, 87, -127, -178])
+    down_3 = posx([339, 129, 110, 87, -127, -178])
 
 
 
     # 바닥에서 Y축으로 이동 
-    grill_1 = posx([339, 9, 120, 87, -127, -178])
+    grill_1 = posx([339, 9, 110, 87, -127, -178])
 
     # 반죽을 집고 Z축으로 이동
 
@@ -134,7 +132,7 @@ def perform_task_spatula():
     swing_2 = posx([326, 80, 40, 90, -92, 140])
 
     # 스윙 후
-    swing_3 = posx([463, 78, 60, 90, -93, 32])
+    swing_3 = posx([463, 78, 65, 90, -93, 32])
 
 
 
@@ -142,17 +140,17 @@ def perform_task_spatula():
     sweep_1 = posx([234, 34, 154, 88, -113, -177])
 
     # 스윕 준비 - 바닥
-    sweep_2 = posx([234, 34, 70, 88, -113, -177])
+    sweep_2 = posx([234, 34, 60, 88, -113, -177])
 
     # 스윕1 - 중간점
-    sweep_3 = posx([327, 80, 70, 88, -113, -177])
+    sweep_3 = posx([337, 70, 60, 88, -113, -177])
     # 스윕2
-    sweep_4 = posx([430, 137, 70, 88, -113, -177])
+    sweep_4 = posx([440, 137, 60, 88, -113, -177])
     # 스윕3
-    sweep_5 = posx([430, 36, 70, 88, -113, -177])
+    sweep_5 = posx([440, 16, 60, 88, -113, -177])
     
 
-    lift_up = posx([430, 36, 297, 88, -113, -177])
+    lift_up = posx([440, 16, 297, 88, -113, -177])
 
     plate_up = posx([690, -98, 252, 119, -109, -175])
 
@@ -160,7 +158,13 @@ def perform_task_spatula():
 
     back_home = posx([342, -141, 355, 94, -122, 85])
 
-    #movej(JReady, vel=150, acc=100)
+
+    anchor_back_0 = posx([374, -348, 311, 61, -173, -176])
+    anchor_back_1 = posx([374, -348, 136, 61, -173, -176])
+
+
+
+    movej(JReady, vel=150, acc=100)
     
     movel(anchor_pos_0, vel=150, acc=100)
     movel(anchor_pos_1, vel=150, acc=100)
@@ -169,7 +173,7 @@ def perform_task_spatula():
     wait(0.5)
   
 
-    movel(anchor_pos_2, vel=150, acc=100)
+    movel(anchor_pos_0, vel=150, acc=100)
 
     task_compliance_ctrl(stx=[3000, 3000, 100, 100, 100, 100])
     fd = [0, 0, 20, 0, 0, 0] #x,y,z,rx,ry,rz
@@ -201,10 +205,45 @@ def perform_task_spatula():
 
     movel(back_home, vel=VELOCITY, acc=ACC)
 
-    movel(anchor_pos_2, vel=VELOCITY, acc=ACC)
-    movel(anchor_pos_1, vel=VELOCITY, acc=ACC)
-    release_65mm()
-    movel(anchor_pos_0, vel=VELOCITY, acc=ACC)
+    # 뒤집개 내려놓기 - 힘 감지 반복 알고리즘
+    FORCE_THRESHOLD = 10  # 기준 대비 힘 증가량(N) - 환경에 맞게 조정
+    x_adjust = 0
+    max_attempts = 10
+
+    for attempt in range(max_attempts):
+        cur_back_0 = posx([371 + x_adjust, -348, 311, 61, -173, -176])
+        cur_back_1 = posx([371 + x_adjust, -348, 136, 61, -173, -176])
+
+        movel(cur_back_0, vel=VELOCITY, acc=ACC)
+
+        # 하강 전 기준 힘 측정
+        base_force = get_tool_force(DR_BASE)
+        base_fz = abs(base_force[2])
+        print(f"[Attempt {attempt + 1}] Base Z force: {base_fz:.1f}N, x_adjust: {x_adjust}")
+
+        # 비동기로 하강 시작
+        amovel(cur_back_1, vel=VELOCITY, acc=ACC)
+
+        force_detected = False
+        while check_motion() != 0:
+            cur_force = get_tool_force(DR_BASE)
+            cur_fz = abs(cur_force[2])
+            if cur_fz - base_fz > FORCE_THRESHOLD:
+                force_detected = True
+                print(f"  Force spike: {cur_fz:.1f}N (base: {base_fz:.1f}N, diff: {cur_fz - base_fz:.1f}N)")
+                break
+            wait(0.1)
+
+        if not force_detected:
+            # 힘 없이 도착 -> 릴리스 후 복귀
+            release_65mm()
+            movel(cur_back_0, vel=VELOCITY, acc=ACC)
+            print(f"Spatula placed successfully (x_adjust={x_adjust})")
+            break
+
+        # 힘 감지 -> 위로 복귀 후 x를 -3 조정
+        movel(cur_back_0, vel=VELOCITY, acc=ACC)
+        x_adjust -= 5
 
     
 

@@ -139,10 +139,13 @@ def perform_task_source():
     JReady = [0, 0, 90, 0, 90, 0]
     # posx([367, 4, 194, 27, -179, 28])
 
-    # 소스통 위치 (소스통이 놓여있는 곳)
-    bottle1 = posx([356, 410, 216, 94, 94, 88])
-    bottle2 = posx([356, 440, 216, 94, 94, 88])
-    bottle2_J = [12, 21, 116, 93, 81, -49]
+    # 소스통 위치 Z (소스통이 놓여있는 곳 - Z축)
+    bottle1_l = posx([635, -513, 374, 94, -90, -91])
+    bottle1_j = [-15, 41, 59, 86, -70, 9]
+
+    # 소스통 위치 (소스통이 놓여있는 곳) 
+    bottle2_l = posx([635, -513, 258, 94, -90, -91])
+    bottle2_j = [-15, 46, 68, 81, -71, 24]
 
     # 접시 위치
     plate1 = posx([823, -201, 280, 139, -93, -89])
@@ -156,10 +159,10 @@ def perform_task_source():
 
     movej(JReady, vel=VELOCITY, acc=ACC)
 
-
-    movel(bottle1, vel=VELOCITY, acc=ACC)   
-    movel(bottle2, vel=VELOCITY, acc=ACC)
+    movej(bottle1_j, vel=VELOCITY, acc=ACC)  
+    movel(bottle2_l, vel=VELOCITY, acc=ACC)
     grip_40mm()
+    movel(bottle1_l, vel=VELOCITY, acc=ACC)
 
 
     movel(plate1, vel=VELOCITY, acc=ACC)
@@ -175,73 +178,14 @@ def perform_task_source():
     # 소스통 귀환
     movel(plate1, vel=VELOCITY, acc=ACC)
 
-    movej(bottle2_J, vel=VELOCITY, acc=ACC)
+    movel(bottle1_l, vel=VELOCITY, acc=ACC)
+    movel(bottle2_l, vel=VELOCITY, acc=ACC)
 
     release_90mm()
-    movel(bottle1, vel=VELOCITY, acc=ACC)
+    movel(bottle1_l, vel=VELOCITY, acc=ACC)
 
-
-    #release_65mm()
-    #wait(0.5)
-
-    #print("  -> 소스통 그립 완료")
-
-    # 소스통 들어올리기
-    #movel(pos_bottle_above, vel=VELOCITY, acc=ACC)
-
-    # ===== 2단계: 서빙 접시 위로 이동 =====
-    #print("[Step 2] 서빙 접시 위로 이동")
-    #movel(pos_plate_above, vel=VELOCITY, acc=ACC)
-
-    # ===== 3단계: 소스통 뒤집기 (출구가 아래로) =====
-    #print("[Step 3] 소스통 뒤집기 (출구 아래로)")
-    #movel(pos_plate_flipped, vel=80, acc=ACC)
-    #wait(0.5)
-
-    # ===== 4단계: 그립 강화 + 컴플라이언스로 소스 뿌리기 경로 이동 =====
-    #print("[Step 4] 소스 뿌리기 시작 (그립 강화 + 경로 이동)")
-
-    # 그립을 더 세게 (12mm) → 소스통을 눌러서 소스 배출
-    #grip_12mm()
-    #wait(0.3)
-
-    # 컴플라이언스 모드로 뿌리기 경로 이동 (살짝 Z축 힘 유지)
-    #task_compliance_ctrl(stx=[3000, 3000, 3000, 200, 200, 200])
-    #set_desired_force(fd=[0, 0, -5, 0, 0, 0], dir=[0, 0, 1, 0, 0, 0], mod=DR_FC_MOD_ABS)
-
-    #movel(pos_pour_start, vel=POUR_VEL, acc=POUR_ACC)
-    #movel(pos_pour_mid, vel=POUR_VEL, acc=POUR_ACC)
-    #movel(pos_pour_end, vel=POUR_VEL, acc=POUR_ACC)
-
-    # 힘 제어 해제 (반드시 release_force → release_compliance_ctrl 순서)
-    #release_force()
-    #release_compliance_ctrl()
-    #print("  -> 소스 뿌리기 완료")
-
-    # ===== 5단계: 그립 느슨하게 (소스 멈춤, 통은 유지) =====
-    #print("[Step 5] 그립 느슨하게 (소스 멈춤)")
-    #grip_20mm()
-    #wait(0.5)
-
-    # ===== 6단계: 소스통 원위치로 회전 (출구 위로) =====
-    #print("[Step 6] 소스통 원위치 회전 (출구 위로)")
-    #movel(pos_plate_above, vel=80, acc=ACC)
-
-    # ===== 7단계: 소스통 원래 위치에 되돌려놓기 =====
-    #print("[Step 7] 소스통 원래 위치로 복귀")
-    #movel(pos_bottle_above, vel=VELOCITY, acc=ACC)
-    #movel(pos_bottle_pick, vel=80, acc=ACC)
-
-    #release_65mm()
-    #wait(0.5)
-    #print("  -> 소스통 릴리스 완료")
-
-    #movel(pos_bottle_above, vel=VELOCITY, acc=ACC)
-
-    # 초기 위치로 복귀
-    #movej(JReady, vel=VELOCITY, acc=ACC)
-    #print("Powder/sauce task completed!")
-
+    movej(JReady, vel=VELOCITY, acc=ACC)
+    
 
 def main(args=None):
     """메인 함수: ROS2 노드 초기화 및 동작 수행"""
