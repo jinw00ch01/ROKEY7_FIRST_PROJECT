@@ -9,7 +9,6 @@ from firebase_admin import db
 # ROS 2 서비스 관련
 try:
     import rclpy
-    from rclpy.executors import SingleThreadedExecutor
     from dsr_msgs2.srv import MovePause, MoveResume, MoveStop, SetRobotMode
     from dsr_msgs2.msg import RobotState
 except ImportError:
@@ -24,8 +23,8 @@ DATABASE_URL = "https://rokey-fe6a9-default-rtdb.asia-southeast1.firebasedatabas
 is_running = False
 pause_event = threading.Event()
 collide_event = threading.Event()
-safety_stop_event = threading.Event()      # 안전정지 (노란불)
-emergency_stop_event = threading.Event()   # 비상정지 (빨간불)
+safety_stop_event = threading.Event()
+emergency_stop_event = threading.Event()
 status_ref = None
 command_queue_ref = None
 control_queue_ref = None
@@ -33,28 +32,20 @@ control_queue_ref = None
 def log(tag, msg):
     print(f"[{time.strftime('%H:%M:%S')}][{tag}] {msg}", flush=True)
 
-# 전역 노드 참조
-_control_node = None   # 제어 서비스 호출 시 spin용
-_task_node = None      # 태스크 실행용 (DSR_ROBOT2가 사용)
-_io_manager = None     # IOManager (한 번만 생성)
+_control_node = None
+_task_node = None
+_io_manager = None
 
 def call_control_service(client, request, name, timeout=3.0):
-    """제어 노드에서 서비스를 동기적으로 호출 (executor 충돌 방지)"""
     global _control_node
-    if client is None or _control_node is None:
-        return False
+    if client is None or _control_node is None: return False
     try:
         if not client.wait_for_service(timeout_sec=1.0):
             log("CTRL", f"  [경고] {name} 서비스 없음")
             return False
         future = client.call_async(request)
         rclpy.spin_until_future_complete(_control_node, future, timeout_sec=timeout)
-        if future.done() and future.result() is not None:
-            log("CTRL", f"  {name} 호출 성공")
-            return True
-        else:
-            log("CTRL", f"  {name} 호출 타임아웃")
-            return False
+        return True if future.done() and future.result() else False
     except Exception as e:
         log("CTRL", f"  {name} 호출 오류: {e}")
         return False
@@ -84,55 +75,24 @@ def update_status(running, status_text, sauce="선택없음", powder="선택없�
         })
     except Exception as e: log("ERROR", f"Firebase Update Fail: {e}")
 
-# ===== 로봇 상태 모니터링 (RobotState 토픽 콜백) =====
 def robot_state_callback(msg):
-    """RobotState 토픽을 구독하여 안전정지/비상정지를 자동 감지"""
     try:
         state = msg.robot_state
-        # 5: SAFE_STOP (보호정지/안전정지 - 노란불)
         if state == 5 and not safety_stop_event.is_set():
             safety_stop_event.set()
+            collide_event.set()
             pause_event.set()
             log("SAFETY", "안전정지(Protective Stop) 감지 - 노란불")
             update_status(is_running, "안전정지 발생 (노란불)")
-        # 6: EMERGENCY_STOP (비상정지 - 빨간불)
         elif state == 6 and not emergency_stop_event.is_set():
             emergency_stop_event.set()
             pause_event.set()
             log("SAFETY", "비상정지(Emergency Stop) 감지 - 빨간불")
             update_status(is_running, "비상정지 발생 (빨간불)")
-    except Exception as e:
-        log("SAFETY", f"RobotState 콜백 오류: {e}")
-
-# ===== 핵심: 안전한 이동 래퍼 함수 (Tasks에서 호출해야 함) =====
-def safe_motion_wrapper(motion_func, *args, **kwargs):
-    """비동기 모션을 실행하고, 폴링을 통해 일시정지/충돌을 감시합니다."""
-    if SIMULATION_MODE:
-        time.sleep(2)
-        return
-
-    # 모션 시작 (예: amovel)
-    motion_func(*args, **kwargs)
-    
-    from DR_init import check_motion, stop
-    # 모션이 진행 중인 동안(2: BUSY) 루프를 돌며 상태 감시
-    while check_motion() == 2:
-        if collide_event.is_set():
-            stop(1) # DR_HOLD: 즉시 강제 정지
-            log("SAFETY", "Collision Detected! Immediate Stop.")
-            while collide_event.is_set(): time.sleep(0.1)
-            break # 정지 후 루프 탈출 (재개 로직은 상위에서 처리)
-        
-        if pause_event.is_set():
-            stop(0) # DR_SSTOP: 부드러운 정지
-            log("SAFETY", "Pause Requested. Soft Stop.")
-            while pause_event.is_set(): time.sleep(0.1)
-            break
-        time.sleep(0.05)
+    except Exception as e: log("SAFETY", f"RobotState 오류: {e}")
 
 def run_robot_task(request_id, sauce, powder):
-    """새 노드 아키텍처(ToolManager + tasks + IOManager) 기반 작업 실행"""
-    global is_running, _task_node
+    global is_running, _task_node, _io_manager
     is_running = True
     update_status(True, "작동 준비 중", sauce, powder)
 
@@ -155,270 +115,155 @@ def run_robot_task(request_id, sauce, powder):
         sauce_task = SauceTask(node, io=io)
         powder_task = PowderTask(node, io=io)
 
-        # 작업 단계 정의
         steps = [
-            ("작업 1/6: 반죽 집기", lambda: (
-                tool_mgr.pick_tool('tongs'),
-                dough.place_dough_with_tongs(),
-                tool_mgr.return_tool('tongs'),
-            )),
-            ("작업 2/6: 프레스 누르기", lambda: (
-                tool_mgr.pick_tool('presser'),
-                press.press_dough(),
-                tool_mgr.return_tool('presser'),
-            )),
-            ("작업 3/6: 접시 배치", lambda: (
-                obj_mgr.pick_and_place_plate(),
-            )),
-            ("작업 4/6: 뒤집개 작업", lambda: (
-                tool_mgr.pick_tool('spatula'),
-                flip_.flip_item_with_spatula(),
-                tool_mgr.return_tool('spatula'),
-            )),
+            ("작업 1/6: 반죽 집기", lambda: (tool_mgr.pick_tool('tongs'), dough.place_dough_with_tongs(), tool_mgr.return_tool('tongs'))),
+            ("작업 2/6: 프레스 누르기", lambda: (tool_mgr.pick_tool('presser'), press.press_dough(), tool_mgr.return_tool('presser'))),
+            ("작업 3/6: 접시 배치", lambda: (obj_mgr.pick_and_place_plate())),
+            ("작업 4/6: 뒤집개 작업", lambda: (tool_mgr.pick_tool('spatula'), flip_.flip_item_with_spatula(), tool_mgr.return_tool('spatula'))),
         ]
         if sauce != "선택없음":
-            steps.append(("작업 5/6: 소스 뿌리기", lambda: (
-                tool_mgr.pick_tool('sauce_bottle'),
-                sauce_task.dispense_sauce(),
-                tool_mgr.return_tool('sauce_bottle'),
-            )))
+            steps.append(("작업 5/6: 소스 뿌리기", lambda: (tool_mgr.pick_tool('sauce_bottle'), sauce_task.dispense_sauce(), tool_mgr.return_tool('sauce_bottle'))))
         if powder != "선택없음":
-            steps.append(("작업 6/6: 가루 뿌리기", lambda: (
-                tool_mgr.pick_tool('powder_bottle'),
-                powder_task.sprinkle_powder(),
-                tool_mgr.return_tool('powder_bottle'),
-            )))
+            steps.append(("작업 6/6: 가루 뿌리기", lambda: (tool_mgr.pick_tool('powder_bottle'), powder_task.sprinkle_powder(), tool_mgr.return_tool('powder_bottle'))))
 
         for step_name, step_fn in steps:
-            # 일시정지/충돌 상태면 대기
             while pause_event.is_set() or collide_event.is_set():
-                if collide_event.is_set():
-                    update_status(True, "충돌/오류 발생 - 조치 필요", sauce, powder)
-                else:
-                    update_status(True, "일시 정지됨", sauce, powder)
+                update_status(True, "중단됨 - 조치 필요" if collide_event.is_set() else "일시 정지됨", sauce, powder)
                 time.sleep(0.5)
 
             update_status(True, step_name, sauce, powder)
             log("TASK", f"시작: {step_name}")
-            step_fn()
-            log("TASK", f"완료: {step_name}")
+            try:
+                step_fn()
+                log("TASK", f"완료: {step_name}")
+            except Exception as e:
+                log("TASK_ERR", f"작업 중단됨: {e}")
+                update_status(False, f"작업 중단: {step_name}")
+                return
 
         update_status(False, "완료 - 대기 중")
     except Exception as e:
         log("TASK_ERR", traceback.format_exc())
-        update_status(False, f"오류 발생: {e}")
+        update_status(False, f"시스템 오류: {e}")
     finally:
         is_running = False
 
 def main():
     global is_running, _control_node, _task_node, _io_manager
     init_firebase()
-
-    # 이전 세션 잔여 명령 큐 정리
     try:
         command_queue_ref.delete()
         control_queue_ref.delete()
-        log("MAIN", "잔여 명령 큐 정리 완료")
-    except Exception as e:
-        log("MAIN", f"큐 초기화 중 오류 (무시 가능): {e}")
+    except Exception: pass
 
-    pause_event.clear()
-    collide_event.clear()
-    safety_stop_event.clear()
-    emergency_stop_event.clear()
+    pause_event.clear(); collide_event.clear(); safety_stop_event.clear(); emergency_stop_event.clear()
+
+    from cobot1.helpers.io_manager import IOManager
 
     if SIMULATION_MODE:
-        log("MAIN", "시뮬레이션 모드로 실행 중 (로봇 미연결)")
-        node = None
-        control_node = None
-        pause_cli = resume_cli = stop_cli = set_mode_cli = None
+        log("MAIN", "시뮬레이션 모드 활성화")
+        _io_manager = IOManager(node=None)
     else:
-        # ROS 2 초기화
         log("MAIN", "ROS2 초기화 중...")
+        import rclpy
         import DR_init
+        import DSR_ROBOT2
         rclpy.init()
 
         from cobot1.helpers.pose_manager import ROBOT_CONFIG
         ROBOT_ID = ROBOT_CONFIG['robot_id']
-        DR_init.__dsr__id = ROBOT_ID
-        DR_init.__dsr__model = ROBOT_CONFIG['robot_model']
+        ROBOT_MODEL = ROBOT_CONFIG['robot_model']
 
-        # 태스크용 노드 (DSR_ROBOT2가 spin_until_future_complete로 점유)
         node = rclpy.create_node("robot_backend", namespace=ROBOT_ID)
         DR_init.__dsr__node = node
+        DR_init.__dsr__id = ROBOT_ID
+        DR_init.__dsr__model = ROBOT_MODEL
+        DSR_ROBOT2.__dsr__node = node
+        DSR_ROBOT2.__dsr__id = ROBOT_ID
+        DSR_ROBOT2.__dsr__model = ROBOT_MODEL
         _task_node = node
-        log("MAIN", "robot_backend 태스크 노드 생성 완료")
-
-        # 로봇 초기화 (io_manager 사용 - 한 번만 생성)
-        from cobot1.helpers.io_manager import IOManager
 
         def _pause_check():
-            """매 모션/IO 전 호출: 일시정지/충돌 상태면 해제될 때까지 대기"""
-            while pause_event.is_set() or collide_event.is_set() or \
-                  safety_stop_event.is_set() or emergency_stop_event.is_set():
-                time.sleep(0.1)
+            if pause_event.is_set() or collide_event.is_set() or \
+               safety_stop_event.is_set() or emergency_stop_event.is_set():
+                from DR_init import stop
+                if collide_event.is_set() or emergency_stop_event.is_set(): stop(1)
+                log("SAFETY", "Pause/Safety detected. Waiting for resume...")
+                while pause_event.is_set() or collide_event.is_set() or \
+                      safety_stop_event.is_set() or emergency_stop_event.is_set():
+                    time.sleep(0.1)
 
         _io_manager = IOManager(node, pause_check=_pause_check)
         _io_manager.set_tool_tcp()
         _io_manager.set_robot_mode_autonomous()
-        log("MAIN", "로봇 초기화 완료 (IOManager + pause_check 연동)")
 
-        # 제어용 별도 노드 (태스크 노드와 executor 충돌 방지)
         control_node = rclpy.create_node("robot_control", namespace=ROBOT_ID)
+        _control_node = control_node
         pause_cli = control_node.create_client(MovePause, f'/{ROBOT_ID}/motion/move_pause')
         resume_cli = control_node.create_client(MoveResume, f'/{ROBOT_ID}/motion/move_resume')
         stop_cli = control_node.create_client(MoveStop, f'/{ROBOT_ID}/motion/move_stop')
         set_mode_cli = control_node.create_client(SetRobotMode, f'/{ROBOT_ID}/system/set_robot_mode')
-        log("MAIN", "제어용 별도 노드 + 서비스 클라이언트 생성 완료")
-        log("MAIN", f"  pause    : /{ROBOT_ID}/motion/move_pause")
-        log("MAIN", f"  resume   : /{ROBOT_ID}/motion/move_resume")
-        log("MAIN", f"  stop     : /{ROBOT_ID}/motion/move_stop")
-        log("MAIN", f"  set_mode : /{ROBOT_ID}/system/set_robot_mode")
-
-        # RobotState 토픽 구독 (제어 노드에서 구독 - 독립 spin 가능)
-        state_sub = control_node.create_subscription(
-            RobotState, f'/{ROBOT_ID}/state', robot_state_callback, 10)
-        log("MAIN", f"RobotState 구독 시작: /{ROBOT_ID}/state")
-
-        _control_node = control_node  # 전역 참조 설정
+        state_sub = control_node.create_subscription(RobotState, f'/{ROBOT_ID}/state', robot_state_callback, 10)
 
     update_status(False, "대기 중")
     log("MAIN", "서버 대기 중...")
 
     try:
         while True:
-            # 1. 제어 명령 처리 (일시정지/재개/충돌)
-            try:
-                control_reqs = control_queue_ref.get() or {}
-            except Exception as e:
-                log("LOOP", f"제어 큐 읽기 실패: {e}")
-                control_reqs = {}
-
+            control_reqs = control_queue_ref.get() or {}
             for req_id, data in control_reqs.items():
-                data = data or {}
-                cmd = data.get("command", "")
-                log("CTRL", f"명령 수신: '{cmd}' | running={is_running} | paused={pause_event.is_set()} | collided={collide_event.is_set()}")
+                cmd = (data or {}).get("command", "")
+                log("CTRL", f"명령 수신: {cmd}")
 
                 if cmd == "pause":
                     pause_event.set()
-                    log("CTRL", "⏸  pause_event 설정")
-                    if not SIMULATION_MODE:
-                        call_control_service(pause_cli, MovePause.Request(), "move_pause")
+                    if not SIMULATION_MODE: call_control_service(pause_cli, MovePause.Request(), "pause")
                     update_status(is_running, "일시 정지됨")
 
                 elif cmd == "simulate_collision":
-                    collide_event.set()
-                    pause_event.set()
-                    log("CTRL", "충돌 시뮬레이션 - collide/pause_event 설정")
+                    collide_event.set(); pause_event.set(); safety_stop_event.set()
                     if not SIMULATION_MODE:
-                        req = MoveStop.Request()
-                        req.stop_mode = 1  # DR_HOLD: 즉시 강제 정지
-                        call_control_service(stop_cli, req, "move_stop(DR_HOLD)")
-                    update_status(is_running, "충돌 감지됨!")
+                        req = MoveStop.Request(); req.stop_mode = 1
+                        call_control_service(stop_cli, req, "stop(DR_HOLD)")
+                    update_status(is_running, "충돌 감지 (시뮬레이션)")
 
                 elif cmd in ["resume", "resume_collision"]:
-                    pause_event.clear()
-                    collide_event.clear()
-                    log("CTRL", "▶  pause/collide_event 해제")
+                    if collide_event.is_set() or safety_stop_event.is_set():
+                        log("CTRL", "안전 상태 복구 중...")
+                        if not SIMULATION_MODE:
+                            req = SetRobotMode.Request()
+                            req.robot_mode = 0; call_control_service(set_mode_cli, req, "MANUAL"); time.sleep(0.8)
+                            req.robot_mode = 1; call_control_service(set_mode_cli, req, "AUTONOMOUS"); time.sleep(0.8)
+                    
+                    pause_event.clear(); collide_event.clear(); safety_stop_event.clear()
+                    if not SIMULATION_MODE: call_control_service(resume_cli, MoveResume.Request(), "resume")
+                    update_status(is_running, "작동 재개")
+
+                elif cmd in ["release_safety_stop", "release_emergency_stop"]:
+                    log("CTRL", f"{cmd} 수행 중...")
+                    safety_stop_event.clear(); emergency_stop_event.clear(); pause_event.clear(); collide_event.clear()
                     if not SIMULATION_MODE:
-                        call_control_service(resume_cli, MoveResume.Request(), "move_resume")
-                    update_status(is_running, "작동 재개 중...")
+                        req = SetRobotMode.Request()
+                        req.robot_mode = 0; call_control_service(set_mode_cli, req, "MANUAL"); time.sleep(1.0)
+                        req.robot_mode = 1; call_control_service(set_mode_cli, req, "AUTONOMOUS"); time.sleep(1.0)
+                        call_control_service(resume_cli, MoveResume.Request(), "resume")
+                    update_status(is_running, "안전 정지 해제 완료")
 
-                elif cmd == "release_safety_stop":
-                    log("CTRL", "안전정지(노란불) 해제 시도...")
-                    safety_stop_event.clear()
-                    pause_event.clear()
-                    if not SIMULATION_MODE:
-                        mode_req = SetRobotMode.Request()
-                        mode_req.robot_mode = 0  # ROBOT_MODE_MANUAL
-                        call_control_service(set_mode_cli, mode_req, "set_mode(MANUAL)")
-                        time.sleep(0.5)
-                        mode_req.robot_mode = 1  # ROBOT_MODE_AUTONOMOUS
-                        call_control_service(set_mode_cli, mode_req, "set_mode(AUTONOMOUS)")
-                        time.sleep(0.5)
-                        call_control_service(resume_cli, MoveResume.Request(), "move_resume")
-                    update_status(is_running, "안전정지 해제 - 작동 재개")
+                control_queue_ref.child(req_id).delete()
 
-                elif cmd == "release_emergency_stop":
-                    log("CTRL", "비상정지(빨간불) 해제 시도...")
-                    emergency_stop_event.clear()
-                    pause_event.clear()
-                    if not SIMULATION_MODE:
-                        mode_req = SetRobotMode.Request()
-                        mode_req.robot_mode = 0  # ROBOT_MODE_MANUAL
-                        call_control_service(set_mode_cli, mode_req, "set_mode(MANUAL)")
-                        time.sleep(1.0)
-                        mode_req.robot_mode = 1  # ROBOT_MODE_AUTONOMOUS
-                        call_control_service(set_mode_cli, mode_req, "set_mode(AUTONOMOUS)")
-                        time.sleep(1.0)
-                        call_control_service(resume_cli, MoveResume.Request(), "move_resume")
-                    update_status(is_running, "비상정지 해제 - 작동 재개")
-
-                else:
-                    log("CTRL", f"[경고] 알 수 없는 명령: '{cmd}'")
-
-                try:
-                    control_queue_ref.child(req_id).delete()
-                except Exception as e:
-                    log("CTRL", f"명령 삭제 실패: {e}")
-
-            # 2. 시작 요청 처리
             if not is_running:
-                try:
-                    start_reqs = command_queue_ref.get() or {}
-                except Exception as e:
-                    log("LOOP", f"시작 큐 읽기 실패: {e}")
-                    start_reqs = {}
-
+                start_reqs = command_queue_ref.get() or {}
                 if start_reqs:
                     req_id = list(start_reqs.keys())[0]
                     data = start_reqs[req_id] or {}
-                    sauce = data.get("sauce", "선택없음") or "선택없음"
-                    powder = data.get("powder", "선택없음") or "선택없음"
-                    log("LOOP", f"시작 요청: id={req_id}, sauce={sauce}, powder={powder}")
-                    try:
-                        command_queue_ref.child(req_id).delete()
-                    except Exception as e:
-                        log("LOOP", f"시작 요청 삭제 실패: {e}")
-                    pause_event.clear()
-                    collide_event.clear()
-                    threading.Thread(
-                        target=run_robot_task,
-                        args=(req_id, sauce, powder),
-                        daemon=True
-                    ).start()
-                    log("LOOP", "✅ 로봇 작업 스레드 시작")
+                    command_queue_ref.child(req_id).delete()
+                    pause_event.clear(); collide_event.clear()
+                    threading.Thread(target=run_robot_task, args=(req_id, data.get("sauce", "선택없음"), data.get("powder", "선택없음")), daemon=True).start()
 
-            # 제어 노드 1회 spin (RobotState 콜백 등 이벤트 처리)
-            if not SIMULATION_MODE and control_node:
-                rclpy.spin_once(control_node, timeout_sec=0.05)
-
+            if not SIMULATION_MODE and _control_node: rclpy.spin_once(_control_node, timeout_sec=0.05)
             time.sleep(0.1)
-
-    except KeyboardInterrupt:
-        log("MAIN", "종료 신호 수신 → 서버 종료 중...")
-        try:
-            command_queue_ref.delete()
-            control_queue_ref.delete()
-            log("MAIN", "명령 큐 정리 완료")
-        except Exception:
-            pass
-        try:
-            update_status(False, "서버 종료됨")
-        except Exception:
-            pass
+    except KeyboardInterrupt: pass
     finally:
-        if not SIMULATION_MODE:
-            try:
-                if control_node:
-                    control_node.destroy_node()
-                if node:
-                    node.destroy_node()
-                rclpy.shutdown()
-                log("MAIN", "ROS2 종료 완료")
-            except Exception as e:
-                log("MAIN", f"ROS2 종료 중 경고: {e}")
-        log("MAIN", "백엔드 서버 종료됨")
+        if not SIMULATION_MODE: rclpy.shutdown()
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()
