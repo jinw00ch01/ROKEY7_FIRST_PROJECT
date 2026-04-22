@@ -1075,6 +1075,23 @@
                         localStorage.setItem('arrowState', 'show');
                     }
                 }, 1800); // 뒤집기 후 1.8초 뒤 이동
+            } else if (text.includes("작업 5")) {
+                statusTextEl.innerText = "선택하신 소스를 뿌리고 있어요 🍯";
+                localStorage.setItem('stepText', statusTextEl.innerText);
+                arrow.classList.remove('show');
+                if (window.selectedSauce && window.selectedSauce !== 'none') {
+                    if (window.selectedSauce === 'sauce1') document.documentElement.style.setProperty('--sauce-color', '#3E2723');
+                    if (window.selectedSauce === 'sauce2') document.documentElement.style.setProperty('--sauce-color', '#E91E63');
+                    sauceLayer.classList.add('show');
+                }
+            } else if (text.includes("작업 6")) {
+                statusTextEl.innerText = "선택하신 마법 가루를 솔솔 뿌리는 중이예요 🪄✨";
+                localStorage.setItem('stepText', statusTextEl.innerText);
+                arrow.classList.remove('show');
+                if (window.selectedPowder && window.selectedPowder !== 'none') {
+                    let powderColor = window.selectedPowder === 'powder1' ? '#FFFFFF' : '#AEEA00';
+                    sprinklePowder(powderLayer, powderColor);
+                }
             } else if (text.includes("작동 중") || text.includes("재개")) {
                 const savedStepText = localStorage.getItem('stepText');
                 if (savedStepText) {
@@ -1086,25 +1103,10 @@
                 window.hasCompleted = true;
                 setTimeout(async () => {
                     arrow.classList.remove('show');
-
-                    if (window.selectedSauce && window.selectedSauce !== 'none') {
-                        statusTextEl.innerText = "선택하신 소스를 뿌리고 있어요 🍯";
-                        if (window.selectedSauce === 'sauce1') document.documentElement.style.setProperty('--sauce-color', '#3E2723');
-                        if (window.selectedSauce === 'sauce2') document.documentElement.style.setProperty('--sauce-color', '#E91E63');
-                        sauceLayer.classList.add('show');
-                        await delay(2000);
-                    }
-                    if (window.selectedPowder && window.selectedPowder !== 'none') {
-                        statusTextEl.innerText = "선택하신 마법 가루를 솔솔 뿌리는 중이예요 🪄✨";
-                        let powderColor = window.selectedPowder === 'powder1' ? '#FFFFFF' : '#AEEA00';
-                        sprinklePowder(powderLayer, powderColor);
-                        await delay(2000);
-                    }
-
                     statusTextEl.innerText = "✨ 맛있는 요정 팬케이크 완성! ✨";
                     await delay(1000);
                     showCompleteModal();
-                }, 1500); // 이동 애니메이션을 마칠 시간을 벌어줌
+                }, 1000); // 이전 단계 애니메이션 후 모달 띄우기 대기
             }
         });
 
