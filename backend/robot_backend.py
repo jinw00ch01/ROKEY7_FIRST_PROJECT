@@ -209,7 +209,15 @@ def main():
         pause_cli = control_node.create_client(MovePause, f'/{ROBOT_ID}/motion/move_pause')
         resume_cli = control_node.create_client(MoveResume, f'/{ROBOT_ID}/motion/move_resume')
 
-    # ===== 3. 대기 루프 =====
+    # ===== 3. 시작 전 이전 세션의 잔여 명령 정리 =====
+    try:
+        command_queue_ref.delete()
+        control_queue_ref.delete()
+        print("[초기화] 이전 세션의 잔여 명령 큐를 정리했습니다.")
+    except Exception as e:
+        print(f"[경고] 명령 큐 초기화 중 오류 (무시 가능): {e}")
+
+    # ===== 4. 대기 루프 =====
     print("\n" + "=" * 50)
     print("로봇 백엔드 서버 시작")
     print("웹 UI에서 시작 버튼을 누르면 로봇이 동작합니다.")
@@ -313,6 +321,13 @@ def main():
 
     except KeyboardInterrupt:
         print("\n[종료] 백엔드 서버를 종료합니다.")
+        # 종료 시 Firebase 명령 큐 정리 (다음 실행 시 오래된 명령 방지)
+        try:
+            command_queue_ref.delete()
+            control_queue_ref.delete()
+            print("[종료] 명령 큐를 정리했습니다.")
+        except Exception:
+            pass
         try:
             update_status(False, "서버 종료됨")
         except Exception:
