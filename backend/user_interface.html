@@ -1109,9 +1109,14 @@
         isCollidedRef.on('value', (snapshot) => {
             const collided = Boolean(snapshot.val());
             const errorModal = document.getElementById('errorModal');
+            const statusTextEl = document.getElementById('status-text');
+
             if (collided) {
-                document.getElementById('errorStatusText').innerText = "상태: 로봇에 충돌이 감지되었습니다!";
+                document.getElementById('errorStatusText').innerText = "상태: 로봇 긴급 정지 (충돌 시뮬레이션)";
                 errorModal.classList.add('show');
+                // 애니메이션 즉시 멈춤
+                document.getElementById('pancake-container').style.animationPlayState = 'paused';
+                if (statusTextEl) statusTextEl.innerText = "🚨 충돌이 감지되어 중단되었습니다!";
             } else {
                 errorModal.classList.remove('show');
             }
@@ -1124,10 +1129,10 @@
             const arrow = document.getElementById('move-arrow');
             if (paused) {
                 pancake.style.animationPlayState = 'paused';
-                arrow.style.animationPlayState = 'paused';
+                if (arrow) arrow.style.animationPlayState = 'paused';
             } else {
                 pancake.style.animationPlayState = 'running';
-                arrow.style.animationPlayState = 'running';
+                if (arrow) arrow.style.animationPlayState = 'running';
             }
         });
 
@@ -1144,7 +1149,15 @@
             }, 1000);
         }
 
-        function closeError() { document.getElementById('errorModal').classList.remove('show'); }
+        function closeError() {
+            // 관리자 페이지나 제어 큐를 통해 'resume_collision' 명령 전송
+            database.ref('robot_commands/control_requests').push({
+                command: "resume_collision",
+                requested_at: firebase.database.ServerValue.TIMESTAMP,
+                source: 'user-kiosk'
+            });
+            document.getElementById('errorModal').classList.remove('show');
+        }
     </script>
 </body>
 
