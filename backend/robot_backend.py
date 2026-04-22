@@ -145,9 +145,10 @@ def main():
         initialize_robot()
         setup_io_clients(node)
 
-        # 제어용 ROS2 서비스 클라이언트 (루프 밖에서 1번만 생성)
-        pause_cli = node.create_client(MovePause, f'/{ROBOT_ID}/motion/move_pause')
-        resume_cli = node.create_client(MoveResume, f'/{ROBOT_ID}/motion/move_resume')
+        # 제어용 별도 ROS2 노드 (spin 충돌 방지)
+        control_node = rclpy.create_node("robot_control_node", namespace=ROBOT_ID)
+        pause_cli = control_node.create_client(MovePause, f'/{ROBOT_ID}/motion/move_pause')
+        resume_cli = control_node.create_client(MoveResume, f'/{ROBOT_ID}/motion/move_resume')
 
     # ===== 3. 대기 루프 =====
     print("\n" + "=" * 50)
@@ -171,7 +172,8 @@ def main():
                     print("\n[제어] 일시 정지 명령 수신")
                     if not SIMULATION_MODE:
                         if pause_cli.wait_for_service(timeout_sec=1.0):
-                            pause_cli.call_async(MovePause.Request())
+                            future = pause_cli.call_async(MovePause.Request())
+                            rclpy.spin_until_future_complete(control_node, future)
                         else:
                             print("[경고] move_pause 서비스를 찾을 수 없습니다.")
                     update_status(is_running, "일시 정지됨")
@@ -182,7 +184,8 @@ def main():
                     print("\n[제어] 충돌 시뮬레이션 수신")
                     if not SIMULATION_MODE:
                         if pause_cli.wait_for_service(timeout_sec=1.0):
-                            pause_cli.call_async(MovePause.Request())
+                            future = pause_cli.call_async(MovePause.Request())
+                            rclpy.spin_until_future_complete(control_node, future)
                         else:
                             print("[경고] move_pause 서비스를 찾을 수 없습니다.")
                     update_status(is_running, "충돌 감지 (시뮬레이션)")
@@ -193,7 +196,8 @@ def main():
                     print("\n[제어] 작동 재개 명령 수신")
                     if not SIMULATION_MODE:
                         if resume_cli.wait_for_service(timeout_sec=1.0):
-                            resume_cli.call_async(MoveResume.Request())
+                            future = resume_cli.call_async(MoveResume.Request())
+                            rclpy.spin_until_future_complete(control_node, future)
                         else:
                             print("[경고] move_resume 서비스를 찾을 수 없습니다.")
                     update_status(is_running, "작동 재개 중...")
@@ -204,7 +208,8 @@ def main():
                     print("\n[제어] 충돌 해제 및 재개 명령 수신")
                     if not SIMULATION_MODE:
                         if resume_cli.wait_for_service(timeout_sec=1.0):
-                            resume_cli.call_async(MoveResume.Request())
+                            future = resume_cli.call_async(MoveResume.Request())
+                            rclpy.spin_until_future_complete(control_node, future)
                         else:
                             print("[경고] move_resume 서비스를 찾을 수 없습니다.")
                     update_status(is_running, "충돌 해제 및 재개 중...")
