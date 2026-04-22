@@ -80,6 +80,69 @@
         #simulate-collision-button { background-color: #ef4444; color: white; }
         #simulate-collision-button:disabled { background-color: #fca5a5; cursor: not-allowed; }
 
+        /* 안전정지/비상정지 해제 버튼 영역 */
+        .safety-buttons {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 2px dashed #e5e7eb;
+        }
+        .safety-buttons-title {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        .safety-btn-row {
+            display: flex;
+            gap: 10px;
+        }
+        #safety-stop-release-button {
+            background-color: #eab308;
+            color: white;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: bold;
+            flex: 1;
+        }
+        #safety-stop-release-button:disabled { background-color: #fde68a; color: #a3a3a3; cursor: not-allowed; }
+        #emergency-stop-release-button {
+            background-color: #dc2626;
+            color: white;
+            padding: 10px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: bold;
+            flex: 1;
+        }
+        #emergency-stop-release-button:disabled { background-color: #fca5a5; color: #a3a3a3; cursor: not-allowed; }
+
+        /* 상태 인디케이터 */
+        .status-indicators {
+            margin-top: 12px;
+            display: flex;
+            gap: 12px;
+        }
+        .indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9em;
+        }
+        .indicator-light {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+        }
+        .indicator-light.off { background-color: #e5e7eb; }
+        .indicator-light.yellow { background-color: #eab308; box-shadow: 0 0 8px #eab308; border-color: #ca8a04; }
+        .indicator-light.red { background-color: #dc2626; box-shadow: 0 0 8px #dc2626; border-color: #b91c1c; }
+
         /* Modal Styles */
         .modal {
             display: none; 
@@ -101,11 +164,11 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .modal-content h2 {
-            color: #dc2626;
             margin-top: 0;
         }
-        #collision-resume-button {
-            background-color: #dc2626;
+        .modal-content h2.yellow { color: #ca8a04; }
+        .modal-content h2.red { color: #dc2626; }
+        .modal-btn {
             color: white;
             padding: 10px 20px;
             border: none;
@@ -116,9 +179,10 @@
             width: 100%;
             font-weight: bold;
         }
-        #collision-resume-button:hover {
-            background-color: #b91c1c;
-        }
+        .modal-btn.yellow-btn { background-color: #eab308; }
+        .modal-btn.yellow-btn:hover { background-color: #ca8a04; }
+        .modal-btn.red-btn { background-color: #dc2626; }
+        .modal-btn.red-btn:hover { background-color: #b91c1c; }
     </style>
 </head>
 <body>
@@ -152,17 +216,59 @@
                 <button id="resume-button" class="control-btn" type="button" disabled>재개</button>
                 <button id="simulate-collision-button" class="control-btn" type="button">충돌 시뮬레이션</button>
             </div>
+
+            <!-- 상태 인디케이터 -->
+            <div class="status-indicators">
+                <div class="indicator">
+                    <div id="safety-light" class="indicator-light off"></div>
+                    <span>안전정지 (노란불)</span>
+                </div>
+                <div class="indicator">
+                    <div id="emergency-light" class="indicator-light off"></div>
+                    <span>비상정지 (빨간불)</span>
+                </div>
+            </div>
+
+            <!-- 안전정지/비상정지 해제 버튼 -->
+            <div class="safety-buttons">
+                <div class="safety-buttons-title">안전 제어</div>
+                <div class="safety-btn-row">
+                    <button id="safety-stop-release-button" type="button" disabled>안전정지(노란불) 해제</button>
+                    <button id="emergency-stop-release-button" type="button" disabled>비상정지(빨간불) 해제</button>
+                </div>
+            </div>
+
             <p id="selected-summary">현재 선택: 소스 선택없음 / 가루 선택없음</p>
             <p id="save-status">버튼을 누르면 Python으로 시작 요청을 보냅니다.</p>
+        </div>
+    </div>
+
+    <!-- 안전정지 팝업 (노란불) -->
+    <div id="safety-stop-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="yellow">안전정지 발생 (노란불)</h2>
+            <p>로봇에 보호정지(Protective Stop)가 발생했습니다.</p>
+            <p>안전 상태를 확인한 후 해제 버튼을 눌러주세요.</p>
+            <button class="modal-btn yellow-btn" onclick="sendControlRequest('release_safety_stop'); document.getElementById('safety-stop-modal').style.display='none';">안전정지 해제</button>
+        </div>
+    </div>
+
+    <!-- 비상정지 팝업 (빨간불) -->
+    <div id="emergency-stop-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="red">비상정지 발생 (빨간불)</h2>
+            <p>로봇에 비상정지(Emergency Stop)가 발생했습니다.</p>
+            <p>물리적 비상정지 버튼을 해제한 후 아래 버튼을 눌러주세요.</p>
+            <button class="modal-btn red-btn" onclick="sendControlRequest('release_emergency_stop'); document.getElementById('emergency-stop-modal').style.display='none';">비상정지 해제</button>
         </div>
     </div>
 
     <!-- 충돌 팝업 (모달) -->
     <div id="collision-modal" class="modal">
         <div class="modal-content">
-            <h2>⚠️ 충돌 감지 ⚠️</h2>
+            <h2 class="red">충돌 감지</h2>
             <p>로봇에 충돌이 발생하여 동작이 중지되었습니다.</p>
-            <button id="collision-resume-button">충돌 해제 및 재개</button>
+            <button class="modal-btn red-btn" id="collision-resume-button">충돌 해제 및 재개</button>
         </div>
     </div>
 
@@ -190,8 +296,10 @@
         const isRunningRef = database.ref('robot_status/is_running');
         const isPausedRef = database.ref('robot_status/is_paused');
         const isCollidedRef = database.ref('robot_status/is_collided');
+        const isSafetyStoppedRef = database.ref('robot_status/is_safety_stopped');
+        const isEmergencyStoppedRef = database.ref('robot_status/is_emergency_stopped');
         const remainingSecondsRef = database.ref('robot_status/remaining_seconds');
-        
+
         const requestQueueRef = database.ref('robot_commands/start_requests');
         const controlQueueRef = database.ref('robot_commands/control_requests');
 
@@ -199,8 +307,14 @@
         const pauseButton = document.getElementById('pause-button');
         const resumeButton = document.getElementById('resume-button');
         const simulateCollisionButton = document.getElementById('simulate-collision-button');
+        const safetyStopReleaseButton = document.getElementById('safety-stop-release-button');
+        const emergencyStopReleaseButton = document.getElementById('emergency-stop-release-button');
         const collisionModal = document.getElementById('collision-modal');
+        const safetyStopModal = document.getElementById('safety-stop-modal');
+        const emergencyStopModal = document.getElementById('emergency-stop-modal');
         const collisionResumeButton = document.getElementById('collision-resume-button');
+        const safetyLight = document.getElementById('safety-light');
+        const emergencyLight = document.getElementById('emergency-light');
 
         const saveStatus = document.getElementById('save-status');
         const countdownText = document.getElementById('countdown-text');
@@ -211,18 +325,32 @@
         let currentIsRunning = false;
         let currentIsPaused = false;
         let currentIsCollided = false;
+        let currentIsSafetyStopped = false;
+        let currentIsEmergencyStopped = false;
 
         function updateButtonStates() {
-            const isBusy = currentIsRunning || currentIsCollided;
+            const isBusy = currentIsRunning || currentIsCollided || currentIsSafetyStopped || currentIsEmergencyStopped;
             startButton.disabled = isBusy;
             sauceSelect.disabled = isBusy;
             powderSelect.disabled = isBusy;
 
-            pauseButton.disabled = !currentIsRunning || currentIsPaused || currentIsCollided;
-            resumeButton.disabled = !currentIsRunning || !currentIsPaused || currentIsCollided;
+            pauseButton.disabled = !currentIsRunning || currentIsPaused || currentIsCollided || currentIsSafetyStopped || currentIsEmergencyStopped;
+            resumeButton.disabled = !currentIsRunning || !currentIsPaused || currentIsCollided || currentIsSafetyStopped || currentIsEmergencyStopped;
             simulateCollisionButton.disabled = !currentIsRunning || currentIsCollided;
-            
-            if (currentIsCollided) {
+
+            // 안전정지/비상정지 해제 버튼: 해당 상태일 때만 활성화
+            safetyStopReleaseButton.disabled = !currentIsSafetyStopped;
+            emergencyStopReleaseButton.disabled = !currentIsEmergencyStopped;
+
+            // 인디케이터 라이트 업데이트
+            safetyLight.className = 'indicator-light ' + (currentIsSafetyStopped ? 'yellow' : 'off');
+            emergencyLight.className = 'indicator-light ' + (currentIsEmergencyStopped ? 'red' : 'off');
+
+            if (currentIsEmergencyStopped) {
+                saveStatus.innerText = '비상정지(빨간불) 발생! 물리적 E-Stop 해제 후 비상정지 해제 버튼을 눌러주세요.';
+            } else if (currentIsSafetyStopped) {
+                saveStatus.innerText = '안전정지(노란불) 발생! 안전 확인 후 해제 버튼을 눌러주세요.';
+            } else if (currentIsCollided) {
                 saveStatus.innerText = '충돌이 감지되었습니다. 팝업에서 해제해주세요.';
             } else if (currentIsPaused) {
                 saveStatus.innerText = '일시 정지 중입니다. 재개 버튼을 눌러주세요.';
@@ -269,6 +397,26 @@
             updateButtonStates();
         });
 
+        isSafetyStoppedRef.on('value', (snapshot) => {
+            currentIsSafetyStopped = Boolean(snapshot.val());
+            if (currentIsSafetyStopped) {
+                safetyStopModal.style.display = 'block';
+            } else {
+                safetyStopModal.style.display = 'none';
+            }
+            updateButtonStates();
+        });
+
+        isEmergencyStoppedRef.on('value', (snapshot) => {
+            currentIsEmergencyStopped = Boolean(snapshot.val());
+            if (currentIsEmergencyStopped) {
+                emergencyStopModal.style.display = 'block';
+            } else {
+                emergencyStopModal.style.display = 'none';
+            }
+            updateButtonStates();
+        });
+
         // Function to send control requests
         async function sendControlRequest(command) {
             try {
@@ -287,6 +435,8 @@
         resumeButton.addEventListener('click', () => sendControlRequest('resume'));
         simulateCollisionButton.addEventListener('click', () => sendControlRequest('simulate_collision'));
         collisionResumeButton.addEventListener('click', () => sendControlRequest('resume_collision'));
+        safetyStopReleaseButton.addEventListener('click', () => sendControlRequest('release_safety_stop'));
+        emergencyStopReleaseButton.addEventListener('click', () => sendControlRequest('release_emergency_stop'));
 
         sauceSelect.addEventListener('change', updateSelectionSummary);
         powderSelect.addEventListener('change', updateSelectionSummary);

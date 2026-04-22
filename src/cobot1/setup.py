@@ -39,6 +39,7 @@ setup(
             'powder_test = cobot1.powder_test:main',
             'main = cobot1.main:main',
             'dougn_to_plate = cobot1.dougn_to_plate:main',
+            'task_manager = cobot1.managers.task_manager_node:main',
         ],
     },
 )
