@@ -78,13 +78,17 @@ def run_robot_task(request_id, sauce, powder):
     global is_running
 
     if not SIMULATION_MODE:
-        # cobot1.main에서 작업 함수 import (ROS2 환경이 소싱된 상태여야 함)
         from cobot1.main import (
             perform_task_dough_grip,
             perform_task_press,
             perform_task_plate_setting,
             perform_task_spatula,
+            perform_task_source,
+            perform_task_powder_snap,
         )
+        from cobot1 import press_test
+        from cobot1 import source_test
+        from cobot1 import powder_test
 
     print(f"\n{'='*50}")
     print(f"[로봇 실행] 요청: {request_id}")
@@ -111,6 +115,14 @@ def run_robot_task(request_id, sauce, powder):
         update_status(True, "작업 4: 뒤집개", sauce, powder)
         if SIMULATION_MODE: simulated_sleep(3)
         else: perform_task_spatula()
+
+        update_status(True, "작업 5: 소스 뿌리기", sauce, powder)
+        if SIMULATION_MODE: simulated_sleep(3)
+        else: perform_task_source()
+
+        update_status(True, "작업 6: 가루 뿌리기", sauce, powder)
+        if SIMULATION_MODE: simulated_sleep(3)
+        else: perform_task_powder_snap()
 
         print(f"[완료] 요청 {request_id} 전체 작업 완료!")
         update_status(False, "완료 - 대기 중")
@@ -144,6 +156,9 @@ def main():
 
         initialize_robot()
         setup_io_clients(node)
+        press_test.setup_io_clients(node)
+        source_test.setup_io_clients(node)
+        powder_test.setup_io_clients(node)
 
         # 제어용 별도 ROS2 노드 (spin 충돌 방지)
         control_node = rclpy.create_node("robot_control_node", namespace=ROBOT_ID)
