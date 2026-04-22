@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>요정의 팬케이크 공방 - 세련된 실사 버전</title>
+    <style>
+        /* ==========================================
+           💡 위치 및 사실적 색상/질감 정의 영역 💡
+           ========================================== */
+        :root {
+            /* 1. 그릴 틀의 위치와 크기 */
+            --griddle-left: 10%;
+            --griddle-top: 15vh;
+            --griddle-width: 35%;
+
+            /* 2. 접시의 위치와 크기 */
+            --plate-left: 55%;
+            --plate-top: 18vh;
+            --plate-width: 35%;
+
+            /* 3. 팬케이크 위치 (그릴의 정중앙 계산값 = 10% + 17.5%) */
+            --pancake-griddle-top: 27.5vh;
+            --pancake-griddle-left: 27.5%;
+
+            /* 4. 팬케이크 위치 (접시의 정중앙 계산값 = 55% + 17.5%) */
+            --pancake-plate-top: 27vh;
+            --pancake-plate-left: 72.5%;
+
+            /* 소스 기본 색상 */
+            --sauce-color: transparent;
+
+            /* 🎨 사실적인 팬케이크 색상 팔레트 */
+            --raw-dough-color: #FFFDE4;
+            /* 생반죽색 */
+            --light-gold-color: #FFECB3;
+            /* 살짝 익은 노란빛 */
+            --deep-gold-gradient: radial-gradient(circle at center, #FFECB3 0%, #FFA000 60%, #D84315 100%);
+            /* 깊고 노릇한 황금갈색 그라데이션 */
+            --pancake-edge-color: #A32D0A;
+            /* 더 두툼하고 진한 측면색 */
+
+            /* 🎨 사실적인 접시 색상 및 질감 */
+            --plate-base-color: #FFFFFF;
+            /* 기본 하얀색 */
+        }
+
+        /* 기본 설정 및 전체 화면 고정 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #FFFDE4 0%, #FFDF00 100%);
+            font-family: 'Arial Rounded MT Bold', 'Malgun Gothic', sans-serif;
+            color: #5D4037;
+            position: relative;
+        }
+
+        /* 반짝이는 요정 가루 애니메이션 */
+        .sparkle {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8);
+            animation: twinkle 2s infinite ease-in-out;
+            z-index: 0;
+        }
+
+        @keyframes twinkle {
+
+            0%,
+            100% {
+                opacity: 0.2;
+                transform: scale(0.5);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.5);
+            }
+        }
+
+        /* 페이지 공통 설정 */
+        .page {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+            flex-direction: column;
+            padding: 2vh 4vw;
+            z-index: 1;
+        }
+
+        .page.active {
+            display: flex;
+            animation: fadeInPage 0.5s ease-out;
+        }
+
+        @keyframes fadeInPage {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* 모서리 홈 아이콘 */
+        .home-icon {
+            position: absolute;
+            top: 3vh;
+            left: 4vw;
+            font-size: 3.5vh;
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid #FFCA28;
+            border-radius: 50%;
+            width: 7vh;
+            height: 7vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.1s;
+        }
+
+        .home-icon:active {
+            transform: scale(0.9);
+        }
+
+        /* 대문 / 옵션 페이지 스타일 */
+        #page-welcome {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .welcome-content {
+            animation: bounceIn 1s cubic-bezier(0.36, 1.3, 0.67, 1.22);
+        }
+
+        @keyframes bounceIn {
+            from {
+                transform: translateY(-50px) scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .fairy-graphic {
+            font-size: 15vh;
+            animation: floatText 3s infinite ease-in-out;
+            margin-bottom: 2vh;
+        }
+
+        .welcome-title {
+            font-size: 5vh;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+            margin-bottom: 5vh;
+            line-height: 1.3;
+            color: #E65100;
+        }
+
+        .order-btn-group {
+            display: flex;
+            gap: 4vw;
+            width: 80vw;
+            justify-content: center;
+        }
+
+        .order-btn {
+            background: linear-gradient(135deg, #FFCA28, #FF9800);
+            color: white;
+            border: 3px solid #FFF;
+            border-radius: 30px;
+            padding: 4vh 5vw;
+            font-size: 3.5vh;
+            font-weight: bold;
+            width: 45%;
+            box-shadow: 0 8px 0 #E65100, 0 10px 15px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+        }
+
+        .order-btn:active {
+            transform: translateY(8px);
+            box-shadow: 0 0 0 #E65100;
+        }
+
+        .admin-btn {
+            position: absolute;
+            bottom: 2vh;
+            right: 4vw;
+            background: rgba(255, 255, 255, 0.4);
+            color: #E65100;
+            opacity: 0.7;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+            border-radius: 50%;
+            width: 5vh;
+            height: 5vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5vh;
+            text-decoration: none;
+            transition: all 0.2s;
+            z-index: 110;
+            /* 에러 팝업 등 어떤 상황에서도 항상 최상단에 보이도록 설정 */
+        }
+
+        #page-options header {
+            display: flex;
+            justify-content: center;
+            height: 15vh;
+            align-items: center;
+        }
+
+        #page-options h1 {
+            font-size: 4.5vh;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.7);
+            animation: floatText 3s infinite ease-in-out;
+            color: #E65100;
+        }
+
+        .option-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+            height: 60vh;
+        }
+
+        .option-group {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            padding: 2vh 2vw;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+        }
+
+        .option-title {
+            font-size: 3vh;
+            margin-bottom: 1.5vh;
+            text-align: center;
+            color: #E65100;
+            font-weight: bold;
+        }
+
+        .radio-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 2vw;
+        }
+
+        .radio-container label {
+            flex: 1;
+            text-align: center;
+            background: #FFF9C4;
+            border: 3px solid #FFD54F;
+            border-radius: 15px;
+            padding: 2vh 0;
+            font-size: 2.5vh;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .radio-container input[type="radio"] {
+            display: none;
+        }
+
+        .radio-container input[type="radio"]:checked+label {
+            background: #FFCA28;
+            border-color: #FF8F00;
+            color: #E65100;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 143, 0, 0.4);
+        }
+
+        #page-options footer {
+            height: 15vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #FF9800, #FF5722);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            width: 70vw;
+            height: 9vh;
+            font-size: 3.5vh;
+            font-weight: bold;
+            box-shadow: 0 8px 0 #BF360C, 0 15px 20px rgba(0, 0, 0, 0.15);
+            animation: pulse 1.5s infinite;
+            cursor: pointer;
+        }
+
+        .start-btn:active {
+            transform: translateY(8px);
+            box-shadow: none;
+        }
+
+        /* ================= 진행 상황 페이지 (주방 씬) ================= */
+        #page-progress {
+            text-align: center;
+            align-items: center;
+        }
+
+        .status-header {
+            font-size: 3.5vh;
+            color: #E65100;
+            margin-top: 8vh;
+            margin-bottom: 1.5vh;
+            z-index: 10;
+            position: relative;
+        }
+
+        .status-desc {
+            font-size: 2.5vh;
+            font-weight: bold;
+            background: white;
+            padding: 1.5vh 5vw;
+            border-radius: 20px;
+            color: #5D4037;
+            border: 2px dashed #FF9800;
+            margin-bottom: 2vh;
+            min-width: 60vw;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            z-index: 10;
+            position: relative;
+        }
+
+        .kitchen-scene {
+            width: 100%;
+            height: 50vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 그릴 및 사실적인 세라믹 접시 설정 */
+        .griddle-frame {
+            position: absolute;
+            left: var(--griddle-left);
+            top: var(--griddle-top);
+            width: var(--griddle-width);
+            height: 25vh;
+            border: 8px solid #444;
+            border-radius: 15px;
+            background: repeating-linear-gradient(to right, #666, #666 2px, #555 2px, #555 4px);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 10px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .griddle {
+            width: 95%;
+            height: 90%;
+            background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.5) 100%);
+            border-radius: 10px;
+        }
+
+        /* 사실적인 유광 세라믹 접시 질감 구현 */
+        .plate {
+            position: absolute;
+            left: var(--plate-left);
+            top: var(--plate-top);
+            width: var(--plate-width);
+            height: 18vh;
+            background: var(--plate-base-color);
+            border-radius: 50%;
+            border: 1px solid #E0E0E0;
+            box-shadow:
+                inset 0 -8px 15px rgba(0, 0, 0, 0.05),
+                inset 0 15px 15px rgba(255, 255, 255, 0.8),
+                0 12px 20px rgba(0, 0, 0, 0.15),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 그릴 -> 접시 이동 방향 화살표 애니메이션 */
+        .arrow-indicator {
+            position: absolute;
+            left: 47%;
+            top: 22vh;
+            font-size: 5vh;
+            color: #FF9800;
+            font-weight: bold;
+            text-shadow: 2px 2px 0px white;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 4;
+        }
+
+        .arrow-indicator.show {
+            opacity: 1;
+            animation: moveArrowBounce 1s infinite alternate ease-in-out;
+        }
+
+        @keyframes moveArrowBounce {
+            from {
+                transform: translateX(-1vw);
+            }
+
+            to {
+                transform: translateX(2vw) scale(1.1);
+            }
+        }
+
+        /* ================= 💡 실사풍 팬케이크 객체 및 애니메이션 설정 💡 ================= */
+        .pancake-volumetric {
+            position: absolute;
+            left: var(--pancake-griddle-left);
+            top: var(--pancake-griddle-top);
+            transform: translate(-50%, -50%) scale(0);
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        /* 팬케이크 본체 */
+        .pancake-body {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: var(--raw-dough-color);
+            transition: all 0.5s, background-color 1s;
+            border: none;
+        }
+
+        /* 팬케이크 두툼한 측면 */
+        .pancake-body::before {
+            content: '';
+            position: absolute;
+            top: 5%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--pancake-edge-color);
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 1s, transform 1s;
+        }
+
+        /* 상태 클래스 공통: 투명도 유지 */
+        .pancake-volumetric.state-drop,
+        .pancake-volumetric.state-press,
+        .pancake-volumetric.state-flip,
+        .pancake-volumetric.state-move {
+            opacity: 1;
+        }
+
+        /* 💡 1단계: 반죽 '뿅' 애니메이션 & 선명한 3D 구형 반죽 💡 */
+        .pancake-volumetric.state-drop {
+            width: 9vw;
+            height: 9vw;
+            /* 완벽한 공 모양을 위해 가로세로를 vw로 통일 (기존 12vw에서 축소) */
+            animation: pancakeAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .pancake-volumetric.state-drop .pancake-body {
+            /* 흐릿해지는 문제를 해결하기 위해 필터를 제거하고 CSS 그라데이션으로 선명한 3D 구 형태 구현 */
+            background: radial-gradient(circle at 35% 25%, #FFFFFF 0%, #FFFDE4 15%, #FFE082 70%, #D4A373 100%);
+            box-shadow:
+                inset -1.5vw -1.5vw 2.5vw rgba(0, 0, 0, 0.15),
+                /* 하단 어두운 입체감 */
+                inset 1vw 1vw 1.5vw rgba(255, 255, 255, 0.9),
+                /* 상단 빛 반사 하이라이트 */
+                0 2vh 2.5vh rgba(0, 0, 0, 0.3);
+            /* 바닥 그림자 */
+            border-radius: 50%;
+        }
+
+        /* 💡 2단계: 누르기 (크기 축소 및 두께 강화) 💡 */
+        .pancake-volumetric.state-press {
+            width: 18vw;
+            height: 9vh;
+            transition: all 1s;
+        }
+
+        .pancake-volumetric.state-press .pancake-body {
+            background-color: var(--light-gold-color);
+            background-image: none;
+            /* 구형 그라데이션 제거 */
+            box-shadow:
+                0 10px 0 var(--pancake-edge-color),
+                0 15px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        /* 💡 3단계: 뒤집기 (양쪽 면 깊고 진한 노릇함, 더 두툼하게) 💡 */
+        .pancake-volumetric.state-flip {
+            animation: flipPancakeReal 1.8s ease-in-out forwards;
+        }
+
+        .pancake-volumetric.state-flip .pancake-body {
+            background: var(--deep-gold-gradient);
+            box-shadow:
+                0 12px 0 var(--pancake-edge-color),
+                0 20px 25px rgba(0, 0, 0, 0.45);
+        }
+
+        .pancake-volumetric.state-flip .pancake-body::before {
+            opacity: 1;
+            transform: translateY(8%);
+        }
+
+        /* 💡 4단계: 접시로 포물선 이동 (최종 크기 및 두께 유지) 💡 */
+        .pancake-volumetric.state-move {
+            width: 19vw;
+            height: 10vh;
+            animation: moveToPlateReal 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        .pancake-volumetric.state-move .pancake-body {
+            background: var(--deep-gold-gradient);
+            box-shadow:
+                0 12px 0 var(--pancake-edge-color),
+                0 20px 25px rgba(0, 0, 0, 0.45);
+        }
+
+        .pancake-volumetric.state-move .pancake-body::before {
+            opacity: 1;
+            transform: translateY(8%);
+        }
+
+        /* 애니메이션 `@keyframes` 정의 */
+        @keyframes pancakeAppear {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+
+            70% {
+                transform: translate(-50%, -50%) scale(1.1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes flipPancakeReal {
+            0% {
+                transform: translate(-50%, -50%) rotateX(0deg);
+            }
+
+            10% {
+                transform: translate(-50%, -50%) rotateX(10deg);
+            }
+
+            50% {
+                transform: translate(-50%, calc(-50% - 15vh)) rotateX(200deg);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) rotateX(360deg);
+                width: 19vw;
+                height: 10vh;
+            }
+        }
+
+        @keyframes moveToPlateReal {
+            0% {
+                top: var(--pancake-griddle-top);
+                left: var(--pancake-griddle-left);
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+
+            50% {
+                top: calc(var(--pancake-griddle-top) - 15vh);
+                left: 50%;
+                transform: translate(-50%, -50%) scale(1.05) rotate(5deg);
+            }
+
+            100% {
+                top: var(--pancake-plate-top);
+                left: var(--pancake-plate-left);
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            }
+        }
+
+        /* 💡 토핑 설정 */
+        .sauce-layer {
+            position: absolute;
+            top: 12%;
+            left: 10%;
+            width: 80%;
+            height: 75%;
+            z-index: 6;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        .sauce-layer path {
+            stroke-dasharray: 350;
+            stroke-dashoffset: 350;
+            transition: stroke-dashoffset 2s ease-in-out;
+            opacity: 0.95;
+        }
+
+        .sauce-layer.show path {
+            stroke-dashoffset: 0;
+        }
+
+        .powder-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 7;
+            pointer-events: none;
+            overflow: hidden;
+            border-radius: 50%;
+        }
+
+        .powder-particle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0;
+            animation: fallParticle 0.6s ease-in forwards;
+        }
+
+        @keyframes fallParticle {
+            0% {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(0px);
+                opacity: 0.85;
+            }
+        }
+
+        @keyframes floatText {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.03);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* 모달 설정 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 30px;
+            padding: 4vh 5vw;
+            width: 80vw;
+            max-width: 650px;
+            text-align: center;
+            border: 5px solid;
+            transform: scale(0.8);
+            transition: transform 0.5s cubic-bezier(0.36, 1.3, 0.67, 1.22);
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-content.error {
+            border-color: #F44336;
+        }
+
+        .modal-content.error h2 {
+            color: #D32F2F;
+            font-size: 3.5vh;
+            margin-bottom: 2vh;
+            white-space: nowrap;
+        }
+
+        .modal-content.error p {
+            font-size: 2.5vh;
+            margin-bottom: 1vh;
+            color: #333;
+        }
+
+        .modal-content.error .status-msg {
+            font-weight: bold;
+            color: #E64A19;
+            margin-bottom: 3vh;
+        }
+
+        .modal-content.complete {
+            border-color: #FF9800;
+            background: linear-gradient(135deg, #FFF9C4 0%, #FFFDE4 100%);
+        }
+
+        .modal-content.complete h2 {
+            color: #E65100;
+            font-size: 4vh;
+            margin-bottom: 1vh;
+            animation: pulse 1s infinite;
+            white-space: nowrap;
+        }
+
+        .modal-content.complete p {
+            font-size: 3vh;
+            font-weight: bold;
+            color: #5D4037;
+            margin-bottom: 2vh;
+        }
+
+        .complete-fairy {
+            font-size: 10vh;
+            margin-bottom: 2vh;
+        }
+
+        .countdown {
+            font-size: 2.5vh;
+            color: #8D6E63;
+            margin-top: 2vh;
+        }
+
+        .close-btn {
+            background: #FF9800;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 1.5vh 5vw;
+            font-size: 2vh;
+            cursor: pointer;
+            border-bottom: 4px solid #E65100;
+            transition: all 0.1s;
+        }
+
+        .close-btn:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <svg style="position: absolute; width: 0; height: 0;">
+        <defs>
+            <filter id="glossy-sauce" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000" flood-opacity="0.3" result="shadow" />
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+                <feSpecularLighting in="blur" specularExponent="40" lighting-color="#ffffff" result="specular">
+                    <fePointLight x="20" y="-20" z="40" />
+                </feSpecularLighting>
+                <feComposite in="specular" in2="SourceAlpha" operator="in" result="specular" />
+                <feMerge>
+                    <feMergeNode in="shadow" />
+                    <feMergeNode in="SourceGraphic" />
+                    <feMergeNode in="specular" />
+                </feMerge>
+            </filter>
+        </defs>
+    </svg>
+
+    <script>
+        for (let i = 0; i < 15; i++) {
+            let sparkle = document.createElement('div'); sparkle.className = 'sparkle';
+            sparkle.style.width = Math.random() * 8 + 4 + 'px'; sparkle.style.height = sparkle.style.width;
+            sparkle.style.top = Math.random() * 100 + 'vh'; sparkle.style.left = Math.random() * 100 + 'vw';
+            sparkle.style.animationDelay = Math.random() * 2 + 's'; document.body.appendChild(sparkle);
+        }
+    </script>
+
+    <div id="page-welcome" class="page active">
+        <div class="welcome-content">
+            <div class="fairy-graphic">
+                <img src="팬케이크요정.png?v=2" alt="팬케이크 요정" style="height: 28vh; object-fit: contain; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));">
+            </div>
+            <h1 class="welcome-title">요정의 팬케이크 공방<br>환영합니다!</h1>
+            <div class="order-btn-group">
+                <button class="order-btn" onclick="goToPage('page-options')">🍽️<br>먹고가기</button>
+                <button class="order-btn" onclick="goToPage('page-options')">🛍️<br>포장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-options" class="page">
+        <button class="home-icon" onclick="goHome()">🏠</button>
+        <header>
+            <h1>토핑을 골라주세요!</h1>
+        </header>
+        <main class="option-main">
+            <div class="option-group">
+                <div class="option-title">시럽 요정의 선택 🍯</div>
+                <div class="radio-container">
+                    <input type="radio" id="sauce-none" name="sauce" value="none" checked><label
+                        for="sauce-none">선택없음</label>
+                    <input type="radio" id="sauce-1" name="sauce" value="sauce1"><label for="sauce-1">초코 시럽</label>
+                    <input type="radio" id="sauce-2" name="sauce" value="sauce2"><label for="sauce-2">딸기 시럽</label>
+                </div>
+            </div>
+            <div class="option-group">
+                <div class="option-title">마법 가루 선택 🪄✨</div>
+                <div class="radio-container">
+                    <input type="radio" id="powder-none" name="powder" value="none" checked><label
+                        for="powder-none">선택없음</label>
+                    <input type="radio" id="powder-1" name="powder" value="powder1"><label for="powder-1">슈가파우더</label>
+                    <input type="radio" id="powder-2" name="powder" value="powder2"><label for="powder-2">녹차가루</label>
+                </div>
+            </div>
+        </main>
+        <footer><button class="start-btn" onclick="startBaking()">팬케이크 굽기 시작! ✨</button></footer>
+    </div>
+
+    <div id="page-progress" class="page">
+        <button class="home-icon" onclick="goHome()">🏠</button>
+        <h2 class="status-header">요정들이 일하고 있어요!</h2>
+        <div id="status-text" class="status-desc">주문 확인 중...</div>
+
+        <div class="kitchen-scene">
+            <div class="griddle-frame">
+                <div class="griddle"></div>
+            </div>
+            <div class="arrow-indicator" id="move-arrow">➡️</div>
+            <div class="plate"></div>
+
+            <div id="pancake-container" class="pancake-volumetric">
+                <div class="pancake-body">
+                    <svg id="sauce-layer" class="sauce-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path id="sauce-path"
+                            d="M 15 20 C 35 5, 65 5, 85 20 C 65 40, 35 40, 15 40 C 35 60, 65 60, 85 60 C 65 80, 35 80, 15 80"
+                            fill="none" stroke="var(--sauce-color)" stroke-width="7" stroke-linecap="round"
+                            stroke-linejoin="round" filter="url(#glossy-sauce)" />
+                    </svg>
+                    <div id="powder-layer" class="powder-layer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="errorModal">
+        <div class="modal-content error">
+            <h2>⚠️ 앗, 오류 발생!</h2>
+            <p>기계 요정에게 문제가 생겼어요.</p>
+            <p class="status-msg" id="errorStatusText">상태: 알 수 없는 오류</p>
+            <p>관리자에게 문의해주세요.</p>
+            <button class="close-btn" onclick="closeError()">닫기</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="completeModal">
+        <div class="modal-content complete">
+            <h2>✨ 짠! 완성! ✨</h2>
+            <div class="complete-fairy">
+                <img src="팬케이크요정.png?v=2" alt="완성 요정" style="height: 22vh; object-fit: contain; filter: drop-shadow(0 8px 10px rgba(0,0,0,0.15));">
+            </div>
+            <p>요정의 팬케이크가 준비되었어요!</p>
+            <button class="close-btn" onclick="goHome()">맛있게 먹기!</button>
+            <div class="countdown" id="countdown-text">30초 후 자동으로 홈화면으로 이동합니다.</div>
+        </div>
+    </div>
+
+    <!-- 모든 페이지에서 고정적으로 보이는 관리자 버튼 -->
+    <a href="index.html" class="admin-btn">⚙️</a>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDl7RTKYMFTWWhaeIz2QsdrLi-ddx3BA5I",
+            authDomain: "rokey-fe6a9.firebaseapp.com",
+            databaseURL: "https://rokey-fe6a9-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "rokey-fe6a9",
+            storageBucket: "rokey-fe6a9.firebasestorage.app",
+            messagingSenderId: "89667570290",
+            appId: "1:89667570290:web:054b7affadc40488b850eb"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const statusTextRef = database.ref('robot_status/status_text');
+        const isCollidedRef = database.ref('robot_status/is_collided');
+        const isPausedRef = database.ref('robot_status/is_paused');
+        const requestQueueRef = database.ref('robot_commands/start_requests');
+
+        function goToPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            localStorage.setItem('currentPage', pageId); // 현재 페이지 상태 저장
+        }
+
+        // 페이지 새로고침(또는 돌아오기) 시 마지막 페이지 및 옵션 복구
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedPage = localStorage.getItem('currentPage');
+            if (savedPage) goToPage(savedPage);
+
+            const savedSauce = localStorage.getItem('selectedSauce');
+            const savedPowder = localStorage.getItem('selectedPowder');
+            if (savedSauce) window.selectedSauce = savedSauce;
+            if (savedPowder) window.selectedPowder = savedPowder;
+
+            const savedPancakeState = localStorage.getItem('pancakeState');
+            if (savedPancakeState) {
+                document.getElementById('pancake-container').className = savedPancakeState;
+            }
+            const savedArrowState = localStorage.getItem('arrowState');
+            if (savedArrowState === 'show') {
+                document.getElementById('move-arrow').classList.add('show');
+            }
+            const savedStepText = localStorage.getItem('stepText');
+            if (savedStepText) {
+                document.getElementById('status-text').innerText = savedStepText;
+            }
+        });
+
+        function goHome() {
+            localStorage.removeItem('currentPage');
+            localStorage.removeItem('selectedSauce');
+            localStorage.removeItem('selectedPowder');
+            localStorage.removeItem('pancakeState');
+            localStorage.removeItem('arrowState');
+            localStorage.removeItem('stepText');
+            location.reload();
+        }
+
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        function sprinklePowder(layerElement, colorCode) {
+            layerElement.innerHTML = '';
+            for (let i = 0; i < 45; i++) {
+                let particle = document.createElement('div');
+                particle.className = 'powder-particle';
+                particle.style.backgroundColor = colorCode;
+                let size = Math.random() * 6 + 4 + 'px';
+                particle.style.width = size; particle.style.height = size;
+                particle.style.left = Math.random() * 80 + 10 + '%'; particle.style.top = Math.random() * 80 + 10 + '%';
+                particle.style.animationDelay = (Math.random() * 1.5) + 's';
+                layerElement.appendChild(particle);
+            }
+        }
+
+        async function startBaking() {
+            const sauce = document.querySelector('input[name="sauce"]:checked').value;
+            const powder = document.querySelector('input[name="powder"]:checked').value;
+
+            // 로봇에 시작 요청 전송
+            try {
+                await requestQueueRef.push({
+                    sauce: sauce === 'sauce1' ? '소스 1' : (sauce === 'sauce2' ? '소스 2' : '선택없음'),
+                    powder: powder === 'powder1' ? '가루 1' : (powder === 'powder2' ? '가루 2' : '선택없음'),
+                    requested_at: firebase.database.ServerValue.TIMESTAMP,
+                    source: 'user-kiosk'
+                });
+            } catch (error) {
+                console.error('요청 전송 실패:', error);
+                alert('로봇에 요청을 보내지 못했습니다.');
+                return;
+            }
+
+            goToPage('page-progress');
+
+            // UI 초기화
+            const pancake = document.getElementById('pancake-container');
+            const arrow = document.getElementById('move-arrow');
+            const sauceLayer = document.getElementById('sauce-layer');
+            const powderLayer = document.getElementById('powder-layer');
+
+            pancake.className = 'pancake-volumetric';
+            sauceLayer.classList.remove('show');
+            powderLayer.innerHTML = '';
+            arrow.classList.remove('show');
+
+            // 나중에 완료 애니메이션에서 쓰기 위해 저장
+            window.selectedSauce = sauce;
+            window.selectedPowder = powder;
+            localStorage.setItem('selectedSauce', sauce);
+            localStorage.setItem('selectedPowder', powder);
+            window.hasCompleted = false;
+        }
+
+        // 파이어베이스 상태 텍스트 연동 및 애니메이션 동기화
+        statusTextRef.on('value', async (snapshot) => {
+            const text = snapshot.val() || '';
+            const statusTextEl = document.getElementById('status-text');
+            const pancake = document.getElementById('pancake-container');
+            const arrow = document.getElementById('move-arrow');
+            const sauceLayer = document.getElementById('sauce-layer');
+            const powderLayer = document.getElementById('powder-layer');
+
+            if (!document.getElementById('page-progress').classList.contains('active')) return;
+
+            // 텍스트에 맞춰 귀여운 멘트로 치환하고 CSS 애니메이션 클래스 트리거
+            if (text.includes("충돌") && !text.includes("재개")) {
+                statusTextEl.innerText = "기계 요정에게 충돌이 발생했어요 🚨";
+            } else if (text.includes("일시 정지")) {
+                statusTextEl.innerText = "요정들이 잠시 쉬고 있어요 ⏸️";
+            } else if (text.includes("작업 1")) {
+                statusTextEl.innerText = "반죽을 가져 오고 있어요 🥣";
+                pancake.className = 'pancake-volumetric state-drop';
+                localStorage.setItem('pancakeState', pancake.className);
+                localStorage.setItem('stepText', statusTextEl.innerText);
+            } else if (text.includes("작업 2")) {
+                statusTextEl.innerText = "반죽을 누르고 있어요 🥞";
+                pancake.className = 'pancake-volumetric state-drop state-press';
+                localStorage.setItem('pancakeState', pancake.className);
+                localStorage.setItem('stepText', statusTextEl.innerText);
+            } else if (text.includes("작업 3")) {
+                statusTextEl.innerText = "반죽을 뒤집고 있어요 🍳";
+                pancake.className = 'pancake-volumetric state-drop state-press state-flip';
+                localStorage.setItem('pancakeState', pancake.className);
+                localStorage.setItem('stepText', statusTextEl.innerText);
+            } else if (text.includes("작업 4")) {
+                statusTextEl.innerText = "완성된 팬케이크가 접시로 이동하고 있어요🍽️";
+                pancake.className = 'pancake-volumetric state-drop state-press state-flip';
+                localStorage.setItem('pancakeState', pancake.className);
+                localStorage.setItem('stepText', statusTextEl.innerText);
+                setTimeout(() => {
+                    if (document.getElementById('page-progress').classList.contains('active')) {
+                        arrow.classList.add('show');
+                        pancake.className = 'pancake-volumetric state-move';
+                        localStorage.setItem('pancakeState', pancake.className);
+                        localStorage.setItem('arrowState', 'show');
+                    }
+                }, 1800); // 뒤집기 후 1.8초 뒤 이동
+            } else if (text.includes("작동 중") || text.includes("재개")) {
+                const savedStepText = localStorage.getItem('stepText');
+                if (savedStepText) {
+                    statusTextEl.innerText = savedStepText;
+                } else {
+                    statusTextEl.innerText = "요정들이 요리를 준비하고 있어요! 🧚‍♀️";
+                }
+            } else if (text.includes("완료") && !window.hasCompleted) {
+                window.hasCompleted = true;
+                setTimeout(async () => {
+                    arrow.classList.remove('show');
+
+                    if (window.selectedSauce && window.selectedSauce !== 'none') {
+                        statusTextEl.innerText = "선택하신 소스를 뿌리고 있어요 🍯";
+                        if (window.selectedSauce === 'sauce1') document.documentElement.style.setProperty('--sauce-color', '#3E2723');
+                        if (window.selectedSauce === 'sauce2') document.documentElement.style.setProperty('--sauce-color', '#E91E63');
+                        sauceLayer.classList.add('show');
+                        await delay(2000);
+                    }
+                    if (window.selectedPowder && window.selectedPowder !== 'none') {
+                        statusTextEl.innerText = "선택하신 마법 가루를 솔솔 뿌리는 중이예요 🪄✨";
+                        let powderColor = window.selectedPowder === 'powder1' ? '#FFFFFF' : '#AEEA00';
+                        sprinklePowder(powderLayer, powderColor);
+                        await delay(2000);
+                    }
+
+                    statusTextEl.innerText = "✨ 맛있는 요정 팬케이크 완성! ✨";
+                    await delay(1000);
+                    showCompleteModal();
+                }, 1500); // 이동 애니메이션을 마칠 시간을 벌어줌
+            }
+        });
+
+        // 충돌 감지 연동
+        isCollidedRef.on('value', (snapshot) => {
+            const collided = Boolean(snapshot.val());
+            const errorModal = document.getElementById('errorModal');
+            if (collided) {
+                document.getElementById('errorStatusText').innerText = "상태: 로봇에 충돌이 감지되었습니다!";
+                errorModal.classList.add('show');
+            } else {
+                errorModal.classList.remove('show');
+            }
+        });
+
+        // 일시정지 애니메이션 멈춤 연동
+        isPausedRef.on('value', (snapshot) => {
+            const paused = Boolean(snapshot.val());
+            const pancake = document.getElementById('pancake-container');
+            const arrow = document.getElementById('move-arrow');
+            if (paused) {
+                pancake.style.animationPlayState = 'paused';
+                arrow.style.animationPlayState = 'paused';
+            } else {
+                pancake.style.animationPlayState = 'running';
+                arrow.style.animationPlayState = 'running';
+            }
+        });
+
+        let countdownInterval;
+        function showCompleteModal() {
+            const modal = document.getElementById('completeModal');
+            const countdownText = document.getElementById('countdown-text');
+            modal.classList.add('show');
+            let timeLeft = 30; countdownText.innerText = `${timeLeft}초 후 자동으로 홈화면으로 이동합니다.`;
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) { countdownText.innerText = `${timeLeft}초 후 자동으로 홈화면으로 이동합니다.`; }
+                else { clearInterval(countdownInterval); goHome(); }
+            }, 1000);
+        }
+
+        function closeError() { document.getElementById('errorModal').classList.remove('show'); }
+    </script>
+</body>
+
+</html>

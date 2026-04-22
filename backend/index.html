@@ -58,10 +58,72 @@
             color: #444;
             font-size: 0.95em;
         }
+        .control-buttons {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+        }
+        .control-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: bold;
+        }
+        #pause-button { background-color: #f59e0b; color: white; }
+        #pause-button:disabled { background-color: #fcd34d; cursor: not-allowed; }
+        
+        #resume-button { background-color: #10b981; color: white; }
+        #resume-button:disabled { background-color: #6ee7b7; cursor: not-allowed; }
+        
+        #simulate-collision-button { background-color: #ef4444; color: white; }
+        #simulate-collision-button:disabled { background-color: #fca5a5; cursor: not-allowed; }
+
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.6); 
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto; 
+            padding: 25px;
+            border-radius: 12px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .modal-content h2 {
+            color: #dc2626;
+            margin-top: 0;
+        }
+        #collision-resume-button {
+            background-color: #dc2626;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            font-weight: bold;
+        }
+        #collision-resume-button:hover {
+            background-color: #b91c1c;
+        }
     </style>
 </head>
 <body>
     <h1>두산 M0609 공정 모니터링</h1>
+    <a href="user_interface.html" style="display:inline-block; margin-bottom: 20px; padding: 10px 15px; background: #6366f1; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; position: relative; z-index: 2000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🥞 요정의 팬케이크 공방(고객 화면)으로 돌아가기</a>
 
     <div id="monitor-box">
         <p>현재 상태:</p>
@@ -85,8 +147,22 @@
         </div>
         <div>
             <button id="start-button" type="button">시작</button>
+            <div class="control-buttons">
+                <button id="pause-button" class="control-btn" type="button" disabled>일시 정지</button>
+                <button id="resume-button" class="control-btn" type="button" disabled>재개</button>
+                <button id="simulate-collision-button" class="control-btn" type="button">충돌 시뮬레이션</button>
+            </div>
             <p id="selected-summary">현재 선택: 소스 선택없음 / 가루 선택없음</p>
             <p id="save-status">버튼을 누르면 Python으로 시작 요청을 보냅니다.</p>
+        </div>
+    </div>
+
+    <!-- 충돌 팝업 (모달) -->
+    <div id="collision-modal" class="modal">
+        <div class="modal-content">
+            <h2>⚠️ 충돌 감지 ⚠️</h2>
+            <p>로봇에 충돌이 발생하여 동작이 중지되었습니다.</p>
+            <button id="collision-resume-button">충돌 해제 및 재개</button>
         </div>
     </div>
 
@@ -112,14 +188,50 @@
         
         const statusTextRef = database.ref('robot_status/status_text');
         const isRunningRef = database.ref('robot_status/is_running');
+        const isPausedRef = database.ref('robot_status/is_paused');
+        const isCollidedRef = database.ref('robot_status/is_collided');
         const remainingSecondsRef = database.ref('robot_status/remaining_seconds');
+        
         const requestQueueRef = database.ref('robot_commands/start_requests');
+        const controlQueueRef = database.ref('robot_commands/control_requests');
+
         const startButton = document.getElementById('start-button');
+        const pauseButton = document.getElementById('pause-button');
+        const resumeButton = document.getElementById('resume-button');
+        const simulateCollisionButton = document.getElementById('simulate-collision-button');
+        const collisionModal = document.getElementById('collision-modal');
+        const collisionResumeButton = document.getElementById('collision-resume-button');
+
         const saveStatus = document.getElementById('save-status');
         const countdownText = document.getElementById('countdown-text');
         const sauceSelect = document.getElementById('sauce-select');
         const powderSelect = document.getElementById('powder-select');
         const selectedSummary = document.getElementById('selected-summary');
+
+        let currentIsRunning = false;
+        let currentIsPaused = false;
+        let currentIsCollided = false;
+
+        function updateButtonStates() {
+            const isBusy = currentIsRunning || currentIsCollided;
+            startButton.disabled = isBusy;
+            sauceSelect.disabled = isBusy;
+            powderSelect.disabled = isBusy;
+
+            pauseButton.disabled = !currentIsRunning || currentIsPaused || currentIsCollided;
+            resumeButton.disabled = !currentIsRunning || !currentIsPaused || currentIsCollided;
+            simulateCollisionButton.disabled = !currentIsRunning || currentIsCollided;
+            
+            if (currentIsCollided) {
+                saveStatus.innerText = '충돌이 감지되었습니다. 팝업에서 해제해주세요.';
+            } else if (currentIsPaused) {
+                saveStatus.innerText = '일시 정지 중입니다. 재개 버튼을 눌러주세요.';
+            } else if (currentIsRunning) {
+                saveStatus.innerText = '현재 작동 중입니다. 작동이 끝날 때까지 기다려주세요.';
+            } else {
+                saveStatus.innerText = '버튼을 누르면 Python으로 시작 요청을 보냅니다.';
+            }
+        }
 
         function updateSelectionSummary() {
             selectedSummary.innerText = `현재 선택: 소스 ${sauceSelect.value} / 가루 ${powderSelect.value}`;
@@ -138,14 +250,43 @@
         });
 
         isRunningRef.on('value', (snapshot) => {
-            const isRunning = Boolean(snapshot.val());
-            startButton.disabled = isRunning;
-            sauceSelect.disabled = isRunning;
-            powderSelect.disabled = isRunning;
-            saveStatus.innerText = isRunning
-                ? '현재 작동 중입니다. 작동이 끝날 때까지 기다려주세요.'
-                : '버튼을 누르면 Python으로 시작 요청을 보냅니다.';
+            currentIsRunning = Boolean(snapshot.val());
+            updateButtonStates();
         });
+
+        isPausedRef.on('value', (snapshot) => {
+            currentIsPaused = Boolean(snapshot.val());
+            updateButtonStates();
+        });
+
+        isCollidedRef.on('value', (snapshot) => {
+            currentIsCollided = Boolean(snapshot.val());
+            if (currentIsCollided) {
+                collisionModal.style.display = 'block';
+            } else {
+                collisionModal.style.display = 'none';
+            }
+            updateButtonStates();
+        });
+
+        // Function to send control requests
+        async function sendControlRequest(command) {
+            try {
+                await controlQueueRef.push({
+                    command: command,
+                    requested_at: firebase.database.ServerValue.TIMESTAMP,
+                    source: 'web-button'
+                });
+            } catch (error) {
+                console.error('명령 전송 실패:', error);
+                alert('명령 전송에 실패했습니다.');
+            }
+        }
+
+        pauseButton.addEventListener('click', () => sendControlRequest('pause'));
+        resumeButton.addEventListener('click', () => sendControlRequest('resume'));
+        simulateCollisionButton.addEventListener('click', () => sendControlRequest('simulate_collision'));
+        collisionResumeButton.addEventListener('click', () => sendControlRequest('resume_collision'));
 
         sauceSelect.addEventListener('change', updateSelectionSummary);
         powderSelect.addEventListener('change', updateSelectionSummary);

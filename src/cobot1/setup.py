@@ -35,6 +35,7 @@ setup(
             'plate_setting_test = cobot1.plate_setting_test:main',
             'spatula_test = cobot1.spatula_test:main',
             'main = cobot1.main:main'
+            'dougn_to_plate = cobot1.dougn_to_plate:main'
         ],
     },
 )
