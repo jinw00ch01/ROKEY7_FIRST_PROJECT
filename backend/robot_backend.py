@@ -14,7 +14,7 @@ except ImportError:
     pass
 
 # ===== 시뮬레이션(가짜) 모드 설정 =====
-SIMULATION_MODE = True  # True로 설정하면 로봇 없이 UI 테스트 가능
+SIMULATION_MODE = False  # True로 설정하면 로봇 없이 UI 테스트 가능
 
 # ===== Firebase 설정 =====
 SERVICE_ACCOUNT_KEY_PATH = os.path.join(
@@ -191,6 +191,7 @@ def main():
         rclpy.init()
 
         from cobot1.main import ROBOT_ID, initialize_robot, setup_io_clients
+        from cobot1 import press_test, source_test, powder_test
 
         node = rclpy.create_node("robot_backend", namespace=ROBOT_ID)
         DR_init.__dsr__node = node

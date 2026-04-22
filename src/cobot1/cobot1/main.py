@@ -167,7 +167,7 @@ def main(args=None):
         # 각 파일에서 import한 작업 함수를 순서대로 수행
         perform_task_dough_grip()
         perform_task_press()
-        perform_task_plate_setting()
+        #perform_task_plate_setting()
         perform_task_spatula()
         perform_task_source()
         perform_task_powder_snap()

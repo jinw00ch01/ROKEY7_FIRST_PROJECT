@@ -151,12 +151,16 @@ def perform_task_press():
 
     # ===== 위치 정의 (실제 환경에 맞게 수정 필요) =====
     JReady = [0, 0, 90, 0, 90, 0]                          # 초기 자세
-    pos_tool_pickup_1 = posx([610, 3, 150, 32, -179, 33])  # 누르기 도구 위치
-    pos_tool_pickup_2 = posx([610, 3, 100, 32, -179, 33])
+    pos_tool_pickup_1 = posx([610, 8, 150, 32, -179, 33])  # 누르기 도구 위치
+    pos_tool_pickup_2 = posx([610, 8, 100, 32, -179, 33])
 
     pos_above_dough = posx([328, -107, 213, 174, 179, 175])     # 반죽 위 위치    
-    pos_press_down = posx([328, -107, 95, 174, 179, 175])      # Z축 하강 목표 (충분히 낮게 설정)
+    pos_press_down = posx([328, -107, 120, 174, 179, 175])      # Z축 하강 목표 (충분히 낮게 설정)
     pos_lift_up = posx([328, -107, 195, 174, 179, 175])         # 들어올리기 위치
+
+
+    pos_tool_backup_1 = posx([610, 8, 150, 32, -179, 33])  # 누르기 도구 위치
+    pos_tool_backup_2 = posx([610, 8, 100, 32, -179, 33])
 
 
 
@@ -212,14 +216,14 @@ def perform_task_press():
     #movel(pos_shake_down, vel=200, acc=ACC)
     print("  -> 털기 완료!")
 
-    movel(pos_tool_pickup_1, vel=VELOCITY, acc=ACC)
+    movel(pos_tool_backup_1, vel=VELOCITY, acc=ACC)
 
     # == 프레스기 원위치 == 
-    movel(pos_tool_pickup_2, vel=VELOCITY, acc=ACC)
+    movel(pos_tool_backup_2, vel=VELOCITY, acc=ACC)
     release_65mm()
     # print("요구사항 3번까지 완료! (릴리스 → 도구 위치 이동 → 그립)")
 
-    movel(pos_tool_pickup_1, vel=VELOCITY, acc=ACC)
+    movel(pos_tool_backup_1, vel=VELOCITY, acc=ACC)
 
 
 def main(args=None):

@@ -139,7 +139,7 @@ def perform_task_powder_snap():
     pos_plate_above = posx([826, -169, 219, 4, 99, -140])
 
     # 가루통 뒤집은 상태 (출구가 아래로, B축 180도 회전)
-    pos_plate_flipped = posx([826, -169, 219, 4, 99, 89])
+    pos_plate_flipped = posx([826, -217, 219, 4, 99, 141]) #89
 
     # ===== 1단계: 가루통 잡고 들어올리고 서빙할 접시 위로 이동 =====
     print("[Step 1] 가루통 잡고 들어올려서 접시 위로 이동")
@@ -169,7 +169,7 @@ def perform_task_powder_snap():
 
     # ===== 3단계: Snap으로 가루 뿌리기 =====
     print("[Step 3] 그리퍼 snap으로 가루 뿌리기")
-    move_periodic(amp=[0, 0, 30, 0, 0, 0], period=[0, 0, 1, 0, 0, 0], atime=0.5, repeat=5, ref=DR_BASE)
+    move_periodic(amp=[0, -15, 30, 0, 0, 0], period=[0, 1, 1, 0, 0, 0], atime=0.5, repeat=5, ref=DR_BASE)
     print("  -> 가루 뿌리기 완료")
 
     # ===== 4단계: 가루통 원위치로 회전 (출구가 위로) =====

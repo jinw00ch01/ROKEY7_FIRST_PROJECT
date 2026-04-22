@@ -148,8 +148,8 @@ def perform_task_source():
     bottle2_j = [-15, 46, 68, 81, -71, 24]
 
     # 접시 위치
-    plate1 = posx([823, -201, 280, 139, -93, -89])
-    plate2 = posx([823, -201, 280, 139, -93, 90])
+    plate1 = posx([783, -151, 280, 139, -93, -89])
+    plate2 = posx([783, -151, 280, 139, -93, 90])
 
     # ===== 1단계: 소스통 잡고 들어올리기 =====
     #print("[Step 1] 소스통 위치로 이동 및 그리핑")
@@ -170,9 +170,8 @@ def perform_task_source():
 
     # 소스 뿌리기 구현
     grip_20mm()
-    move_spiral(rev=3,rmax=10.0,lmax=-10,v=40,a=40,axis=DR_AXIS_Z, ref=DR_BASE)
-    wait(0.5)
-    move_spiral(rev=3,rmax=10.0,lmax=-10,v=40,a=40,axis=DR_AXIS_Z, ref=DR_BASE)
+    
+    move_spiral(rev=5,rmax=30.0,lmax=-20,v=80,a=80,axis=DR_AXIS_Z, ref=DR_BASE)
     mwait(0.5)
 
     # 소스통 귀환

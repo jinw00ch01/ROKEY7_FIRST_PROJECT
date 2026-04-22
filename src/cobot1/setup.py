@@ -37,8 +37,8 @@ setup(
             'dough_to_plate = cobot1.dough_to_plate:main',
             'source_test = cobot1.source_test:main',
             'powder_test = cobot1.powder_test:main',
-            'main = cobot1.main:main'
-            'dougn_to_plate = cobot1.dougn_to_plate:main'
+            'main = cobot1.main:main',
+            'dougn_to_plate = cobot1.dougn_to_plate:main',
         ],
     },
 )

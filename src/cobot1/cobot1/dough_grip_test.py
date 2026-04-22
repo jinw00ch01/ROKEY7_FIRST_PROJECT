@@ -45,7 +45,7 @@ def initialize_robot():
     print("#" * 50)
 
 
-def perform_task():
+def perform_task_dough_grip():
     """접시 세팅 작업 수행"""
     print("Performing plate setting task...")
     from DSR_ROBOT2 import (
@@ -92,19 +92,33 @@ def perform_task():
         set_digital_output(3, OFF)
         set_digital_output(2, ON)
         set_digital_output(1, ON)
+
+
+    def grip_40mm():
+        print("grip_40mm Gripping...")
+        set_digital_output(3, ON)
+        set_digital_output(2, OFF)
+        set_digital_output(1, ON)
+
+
+    def grip_50mm():
+        print("grip_40mm Gripping...")
+        set_digital_output(3, ON)
+        set_digital_output(2, ON)
+        set_digital_output(1, OFF)
         
 
 
     # 위치 정의 (실제 환경에 맞게 수정 필요)
     JReady = [0, 0, 90, 0, 90, 0]                          # 초기 위치
-    pick_start_1 = posx([230, 212, 12, 36,-179,36]) #초기 집개 위치
-    pick_start_2 = posx([230, 212, 150, 36, -179,36]) #초기 집개 위치2 (z축 상승)
+    pick_start_1 = posx([230, 202, -3, 36,-179,36]) #초기 집개 위치
+    pick_start_2 = posx([230, 202, 150, 36, -179,36]) #초기 집개 위치2 (z축 상승)
 
-    dough_start_1 =  posx([461, 211, 150, 36, -178, 36]) # 반죽 위치
-    dough_start_2 =  posx([461, 211, 12, 36, -178, 36]) # 반죽 위치
+    dough_start_1 =  posx([461, 241, 150, 36, -178, 36]) # 반죽 위치
+    dough_start_2 =  posx([461, 241, 9, 36, -178, 36]) # 반죽 위치
 
-    dough_end_1 = posx([323, -19, 38, 17, -177, 17]) # 반죽 놓기 위치
-    dough_end_2 = posx([323, -19, 150, 17, -177, 17]) # 반죽 놓기 위치 (Z축 상승)
+    dough_end_1 = posx([323, -10, 38, 17, -177, 17]) # 반죽 놓기 위치
+    dough_end_2 = posx([323, -10, 150, 17, -177, 17]) # 반죽 놓기 위치 (Z축 상승)
 
     # 1. 그리퍼를 릴리스한다
     print("Step 1: 그리퍼 release_90mm 초기화")
@@ -134,9 +148,9 @@ def perform_task():
     print("Step 4: dough_start_1로 이동")
     movel(dough_start_2, vel=200, acc=150)
 
-    # 5. 반죽 그립한다.
+    # 5. 반죽 그립한다. - 적당한 그립 mm를 찾을것. 40mm 실패
     print("Step 5: 반죽 그립")
-    grip_20mm()
+    grip_50mm()
     wait(0.5)
 
     movel(dough_start_1, vel=150, acc=ACC)
@@ -191,7 +205,7 @@ def main(args=None):
     # 초기화는 한 번만 수행
     initialize_robot()
 
-    perform_task()
+    perform_task_dough_grip()
 
     rclpy.shutdown()
 

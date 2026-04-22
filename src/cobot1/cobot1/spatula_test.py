@@ -119,42 +119,57 @@ def perform_task_spatula():
 
 
 
-    # 바닥에서 Y축으로 이동 
-    grill_1 = posx([339, 9, 110, 87, -127, -178])
+    # 바닥에서 Y축으로 이동(변경 전) 
+    #grill_1 = posx([339, 9, 110, 87, -127, -178])
+
+    # 바닥에서 y축으로 이동 처음 뒤집기 z축 상승전(변경 후)
+    grill_1 = posx([310, 12, 50, 87, -107, 179])
 
     # 반죽을 집고 Z축으로 이동
 
 
     # 스윙 전
-    swing_1 = posx([326, 80, 50, 90, -92, 179])
+    swing_1 = posx([326, 25, 50, 90, -92, 179])
 
     # 스윙 중간
-    swing_2 = posx([326, 80, 40, 90, -92, 140])
+    swing_2 = posx([326, 25, 40, 90, -92, 140])
 
     # 스윙 후
-    swing_3 = posx([463, 78, 65, 90, -93, 32])
+    swing_3 = posx([463, 25, 65, 90, -93, 32])
 
 
 
     # 스윕 준비 z축 이동
-    sweep_1 = posx([234, 34, 154, 88, -113, -177])
+    #sweep_1 = posx([234, 34, 154, 88, -113, -177])
 
     # 스윕 준비 - 바닥
-    sweep_2 = posx([234, 34, 60, 88, -113, -177])
+    #sweep_2 = posx([234, 34, 50, 88, -113, -177])
 
     # 스윕1 - 중간점
-    sweep_3 = posx([337, 70, 60, 88, -113, -177])
+    #sweep_3 = posx([337, 70, 50, 88, -113, -177])
     # 스윕2
-    sweep_4 = posx([440, 137, 60, 88, -113, -177])
+    #sweep_4 = posx([440, 137, 50, 88, -113, -177])
     # 스윕3
-    sweep_5 = posx([440, 16, 60, 88, -113, -177])
+    #sweep_5 = posx([440, 16, 50, 88, -113, -177])
+
+    # 접시로 이동 바닥에서 쓸어가기1 (변경 후) 
+    sweep_1 = posx([221, 20, 30, 85, -108, 178])
+    # 접시로 바닥에서 쓸어가기2
+    sweep_2 = posx([313, 47, 30, 101, -110, -179])
+    # 접시로 이동 바닥에서 쓸어가기3
+    sweep_3 = posx([457, 105, 30, 88, -113, -177])
+    # 접시로 이동 바닥에서 쓸어가기4 z축 들어올리기전
+    sweep_4 = posx([451, 10, 30, 87, -111, 179])
+    # 접시 이동 z축 상승
+    lift_up = posx([451, 10, 297, 87, -111, 179])
+
     
 
-    lift_up = posx([440, 16, 297, 88, -113, -177])
+    #lift_up = posx([440, 16, 297, 88, -113, -177])
 
     plate_up = posx([690, -98, 252, 119, -109, -175])
 
-    plate_down = posx([690, -98, 252, 119, -109, 91])
+    plate_down = posx([690, -98, 252, 119, -109, 111])
 
     back_home = posx([342, -141, 355, 94, -122, 85])
 
@@ -194,7 +209,7 @@ def perform_task_spatula():
     movel(sweep_2, vel=VELOCITY, acc=ACC)
     movel(sweep_3, vel=VELOCITY, acc=ACC)
     movel(sweep_4, vel=VELOCITY, acc=ACC)
-    movel(sweep_5, vel=VELOCITY, acc=ACC)
+    #movel(lift_up, vel=VELOCITY, acc=ACC)
 
     release_force()
     release_compliance_ctrl()
@@ -206,13 +221,13 @@ def perform_task_spatula():
     movel(back_home, vel=VELOCITY, acc=ACC)
 
     # 뒤집개 내려놓기 - 힘 감지 반복 알고리즘
-    FORCE_THRESHOLD = 10  # 기준 대비 힘 증가량(N) - 환경에 맞게 조정
+    FORCE_THRESHOLD = 7  # 기준 대비 힘 증가량(N) - 환경에 맞게 조정
     x_adjust = 0
     max_attempts = 10
 
     for attempt in range(max_attempts):
-        cur_back_0 = posx([371 + x_adjust, -348, 311, 61, -173, -176])
-        cur_back_1 = posx([371 + x_adjust, -348, 136, 61, -173, -176])
+        cur_back_0 = posx([371 + x_adjust, -340, 311, 61, -173, -176])
+        cur_back_1 = posx([371 + x_adjust, -340, 136, 61, -173, -176])
 
         movel(cur_back_0, vel=VELOCITY, acc=ACC)
 
@@ -243,7 +258,7 @@ def perform_task_spatula():
 
         # 힘 감지 -> 위로 복귀 후 x를 -3 조정
         movel(cur_back_0, vel=VELOCITY, acc=ACC)
-        x_adjust -= 5
+        x_adjust -= 4
 
     
 
