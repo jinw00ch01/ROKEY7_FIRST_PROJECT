@@ -116,13 +116,15 @@ def run_robot_task(request_id, sauce, powder):
         if SIMULATION_MODE: simulated_sleep(3)
         else: perform_task_spatula()
 
-        update_status(True, "작업 5: 소스 뿌리기", sauce, powder)
-        if SIMULATION_MODE: simulated_sleep(3)
-        else: perform_task_source()
+        if sauce != "선택없음":
+            update_status(True, "작업 5: 소스 뿌리기", sauce, powder)
+            if SIMULATION_MODE: simulated_sleep(3)
+            else: perform_task_source()
 
-        update_status(True, "작업 6: 가루 뿌리기", sauce, powder)
-        if SIMULATION_MODE: simulated_sleep(3)
-        else: perform_task_powder_snap()
+        if powder != "선택없음":
+            update_status(True, "작업 6: 가루 뿌리기", sauce, powder)
+            if SIMULATION_MODE: simulated_sleep(3)
+            else: perform_task_powder_snap()
 
         print(f"[완료] 요청 {request_id} 전체 작업 완료!")
         update_status(False, "완료 - 대기 중")
