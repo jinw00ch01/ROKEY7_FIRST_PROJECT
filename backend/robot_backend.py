@@ -33,8 +33,10 @@ control_queue_ref = None
 def log(tag, msg):
     print(f"[{time.strftime('%H:%M:%S')}][{tag}] {msg}", flush=True)
 
-# 제어 노드 전역 참조 (서비스 호출 시 spin용)
-_control_node = None
+# 전역 노드 참조
+_control_node = None   # 제어 서비스 호출 시 spin용
+_task_node = None      # 태스크 실행용 (DSR_ROBOT2가 사용)
+_io_manager = None     # IOManager (한 번만 생성)
 
 def call_control_service(client, request, name, timeout=3.0):
     """제어 노드에서 서비스를 동기적으로 호출 (executor 충돌 방지)"""
@@ -129,38 +131,77 @@ def safe_motion_wrapper(motion_func, *args, **kwargs):
         time.sleep(0.05)
 
 def run_robot_task(request_id, sauce, powder):
-    global is_running
+    """새 노드 아키텍처(ToolManager + tasks + IOManager) 기반 작업 실행"""
+    global is_running, _task_node
     is_running = True
-    update_status(True, "작동 중", sauce, powder)
-    
+    update_status(True, "작동 준비 중", sauce, powder)
+
     try:
-        # 실제 로봇 모듈 import
-        from cobot1.main import (
-            perform_task_dough_grip, perform_task_press,
-            perform_task_plate_setting, perform_task_spatula,
-            perform_task_source, perform_task_powder_snap
-        )
-        
-        # 각 작업 단계 (내부에서 safe_motion_wrapper를 사용하도록 수정 권장)
-        update_status(True, "작업 1: 반죽 집기", sauce, powder)
-        perform_task_dough_grip()
-        
-        update_status(True, "작업 2: 프레스 누르기", sauce, powder)
-        perform_task_press()
-        
-        update_status(True, "작업 3: 접시 세팅", sauce, powder)
-        perform_task_plate_setting()
-        
-        update_status(True, "작업 4: 뒤집개 작업", sauce, powder)
-        perform_task_spatula()
+        from cobot1.managers.tool_manager import ToolManager
+        from cobot1.managers.object_manager import ObjectManager
+        from cobot1.tasks.dough_task import DoughTask
+        from cobot1.tasks.press_task import PressTask
+        from cobot1.tasks.flip_task import FlipTask
+        from cobot1.tasks.sauce_task import SauceTask
+        from cobot1.tasks.powder_task import PowderTask
 
+        node = _task_node
+        io = _io_manager
+        tool_mgr = ToolManager(node, io=io)
+        obj_mgr = ObjectManager(node, io=io)
+        dough = DoughTask(node, io=io)
+        press = PressTask(node, io=io)
+        flip_ = FlipTask(node, io=io)
+        sauce_task = SauceTask(node, io=io)
+        powder_task = PowderTask(node, io=io)
+
+        # 작업 단계 정의
+        steps = [
+            ("작업 1/6: 반죽 집기", lambda: (
+                tool_mgr.pick_tool('tongs'),
+                dough.place_dough_with_tongs(),
+                tool_mgr.return_tool('tongs'),
+            )),
+            ("작업 2/6: 프레스 누르기", lambda: (
+                tool_mgr.pick_tool('presser'),
+                press.press_dough(),
+                tool_mgr.return_tool('presser'),
+            )),
+            ("작업 3/6: 접시 배치", lambda: (
+                obj_mgr.pick_and_place_plate(),
+            )),
+            ("작업 4/6: 뒤집개 작업", lambda: (
+                tool_mgr.pick_tool('spatula'),
+                flip_.flip_item_with_spatula(),
+                tool_mgr.return_tool('spatula'),
+            )),
+        ]
         if sauce != "선택없음":
-            update_status(True, "작업 5: 소스 뿌리기", sauce, powder)
-            perform_task_source()
-
+            steps.append(("작업 5/6: 소스 뿌리기", lambda: (
+                tool_mgr.pick_tool('sauce_bottle'),
+                sauce_task.dispense_sauce(),
+                tool_mgr.return_tool('sauce_bottle'),
+            )))
         if powder != "선택없음":
-            update_status(True, "작업 6: 가루 뿌리기", sauce, powder)
-            perform_task_powder_snap()
+            steps.append(("작업 6/6: 가루 뿌리기", lambda: (
+                tool_mgr.pick_tool('powder_bottle'),
+                powder_task.sprinkle_powder(),
+                tool_mgr.return_tool('powder_bottle'),
+            )))
+
+        for step_name, step_fn in steps:
+            # 일시정지/충돌 상태면 대기
+            while pause_event.is_set() or collide_event.is_set():
+                if collide_event.is_set():
+                    update_status(True, "충돌/오류 발생 - 조치 필요", sauce, powder)
+                else:
+                    update_status(True, "일시 정지됨", sauce, powder)
+                time.sleep(0.5)
+
+            update_status(True, step_name, sauce, powder)
+            log("TASK", f"시작: {step_name}")
+            step_fn()
+            log("TASK", f"완료: {step_name}")
 
         update_status(False, "완료 - 대기 중")
     except Exception as e:
@@ -170,7 +211,7 @@ def run_robot_task(request_id, sauce, powder):
         is_running = False
 
 def main():
-    global is_running, _control_node
+    global is_running, _control_node, _task_node, _io_manager
     init_firebase()
 
     # 이전 세션 잔여 명령 큐 정리
@@ -197,20 +238,30 @@ def main():
         import DR_init
         rclpy.init()
 
-        from cobot1.main import ROBOT_ID, initialize_robot, setup_io_clients
-        from cobot1 import press_test, source_test, powder_test
+        from cobot1.helpers.pose_manager import ROBOT_CONFIG
+        ROBOT_ID = ROBOT_CONFIG['robot_id']
+        DR_init.__dsr__id = ROBOT_ID
+        DR_init.__dsr__model = ROBOT_CONFIG['robot_model']
 
         # 태스크용 노드 (DSR_ROBOT2가 spin_until_future_complete로 점유)
         node = rclpy.create_node("robot_backend", namespace=ROBOT_ID)
         DR_init.__dsr__node = node
+        _task_node = node
         log("MAIN", "robot_backend 태스크 노드 생성 완료")
 
-        initialize_robot()
-        setup_io_clients(node)
-        press_test.setup_io_clients(node)
-        source_test.setup_io_clients(node)
-        powder_test.setup_io_clients(node)
-        log("MAIN", "로봇 초기화 및 IO 클라이언트 설정 완료")
+        # 로봇 초기화 (io_manager 사용 - 한 번만 생성)
+        from cobot1.helpers.io_manager import IOManager
+
+        def _pause_check():
+            """매 모션/IO 전 호출: 일시정지/충돌 상태면 해제될 때까지 대기"""
+            while pause_event.is_set() or collide_event.is_set() or \
+                  safety_stop_event.is_set() or emergency_stop_event.is_set():
+                time.sleep(0.1)
+
+        _io_manager = IOManager(node, pause_check=_pause_check)
+        _io_manager.set_tool_tcp()
+        _io_manager.set_robot_mode_autonomous()
+        log("MAIN", "로봇 초기화 완료 (IOManager + pause_check 연동)")
 
         # 제어용 별도 노드 (태스크 노드와 executor 충돌 방지)
         control_node = rclpy.create_node("robot_control", namespace=ROBOT_ID)

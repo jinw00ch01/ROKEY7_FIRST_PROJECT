@@ -48,14 +48,17 @@ class IOManager:
     안전하고 단순한 인터페이스를 제공한다.
     """
 
-    def __init__(self, node: Node):
+    def __init__(self, node: Node, pause_check=None):
         """IOManager 초기화.
 
         Args:
             node: ROS2 노드. 서비스 클라이언트 생성 및 spin에 사용.
+            pause_check: 일시정지 체크 콜백. 설정 시 매 모션/IO 전 호출되어
+                         일시정지/충돌 상태면 블로킹 대기.
         """
         self._node = node
         self._logger = node.get_logger()
+        self._pause_check = pause_check
 
         # ROS2 서비스 클라이언트 생성
         self._cli_set_digital_output = node.create_client(
@@ -73,6 +76,11 @@ class IOManager:
         self._cli_get_digital_input.wait_for_service(timeout_sec=5.0)
         self._cli_check_force_condition.wait_for_service(timeout_sec=5.0)
         self._logger.info('[IOManager] IO/Force service clients ready.')
+
+    def _wait_if_paused(self):
+        """일시정지/충돌 상태면 해제될 때까지 블로킹 대기."""
+        if self._pause_check:
+            self._pause_check()
 
     # ===== 디지털 I/O =====
 
@@ -178,6 +186,7 @@ class IOManager:
             self._logger.error(f'Unknown gripper preset: {preset_name}')
             return
 
+        self._wait_if_paused()
         config = GRIPPER_PRESETS[preset_name]
         self._logger.info(f'[IOManager] gripper: {preset_name}')
         for index in [3, 2, 1]:
@@ -201,6 +210,7 @@ class IOManager:
             mod: 이동 모드 (0=절대, 1=상대).
             ra: 특이점 처리.
         """
+        self._wait_if_paused()
         from DSR_ROBOT2 import movej
         self._logger.debug(f'move_joint_safe: pos={pos}, vel={vel}, acc={acc}')
         movej(pos, vel=vel, acc=acc, time=time_val, radius=radius, mod=mod, ra=ra)
@@ -223,6 +233,7 @@ class IOManager:
             ra: 특이점 처리.
             ref: 참조 좌표계 (None=기본, DR_BASE, DR_TOOL 등).
         """
+        self._wait_if_paused()
         from DSR_ROBOT2 import movel
         self._logger.debug(f'move_line_safe: pos={pos}, vel={vel}, acc={acc}')
         if ref is not None:
