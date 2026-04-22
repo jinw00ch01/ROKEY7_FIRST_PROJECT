@@ -102,8 +102,14 @@ def perform_task_plate_setting():
     plate_start0 = posx([622, 219, 244, 5, 173, -171])
     plate_start1 = posx([623, 220, 210, 5, 173, -171]) #[19,42,27,-181,-103,21]
     plate_start2 = posx([623,50,275,5,173,-171])
-    plate_end1 = [-31,25,111,-235,37,36] #조인트
-    plate_end2 = posx([639,-215,90,0,110,179]) # l좌표                     # 접시를 반듯하게 놓기 위한 관절 각도
+
+    # 접시 놓기 Z축 위 이동
+    plate_end1 = posx([710, -183, 254, 170, -106, -1])
+
+    plate_end2 = posx([710, -183, 95, 170, -106, -1])
+
+    plate_end3 = posx([606, -183, 95, 170, -106, -1])
+
 
     # 1. 그리퍼를 릴리스한다
     print("Step 1: 그리퍼 릴리스 초기화")
@@ -128,26 +134,12 @@ def perform_task_plate_setting():
 
     # 4. 세팅 목적지가 있는 위치로 이동한다
     print("Step 4: plate_end1로 이동")
-    movej(plate_end1, vel=200, acc=ACC)
-
-    # 6. 그리퍼를 릴리스한다
-    print("Step 5: 그리퍼 릴리스")
-    release_65mm()
-    wait(0.5)
-
-    # 5. 접시를 반듯하게 내려놓기 위해 관절을 조절한다
-    print("Step 6: plate_end2로 이동")
+    movel(plate_end1, vel=200, acc=ACC)
     movel(plate_end2, vel=VELOCITY, acc=ACC)
 
-    # 6. 그리퍼를 릴리스한다
-    #print("Step 6: 그리퍼 릴리스")
-    #release()
-    #wait(0.5)
+    release_65mm()
 
-    # 초기 위치로 이동
-    print("Moving to ready position...")
-    movej(JReady, vel=VELOCITY, acc=ACC)
-    print("Plate setting task completed!")
+    movel(plate_end3, vel=VELOCITY, acc=ACC)
 
 
 def main(args=None):

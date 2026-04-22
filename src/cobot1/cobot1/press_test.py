@@ -151,21 +151,21 @@ def perform_task_press():
 
     # ===== 위치 정의 (실제 환경에 맞게 수정 필요) =====
     JReady = [0, 0, 90, 0, 90, 0]                          # 초기 자세
-    pos_tool_pickup_1 = posx([563, -5, 153, 7, -179, 8])  # 누르기 도구 위치
-    pos_tool_pickup_2 = posx([563, -5, 64, 7, -179, 8])
+    pos_tool_pickup_1 = posx([610, 3, 150, 32, -179, 33])  # 누르기 도구 위치
+    pos_tool_pickup_2 = posx([610, 3, 100, 32, -179, 33])
 
-    pos_above_dough = posx([316, -85, 153, 166, 179, 167])     # 반죽 위 위치    
-    pos_press_down = posx([316, -85, 60, 166, 179, 167])       # Z축 하강 목표 (충분히 낮게 설정)
-    pos_lift_up = posx([316, -85, 120, 166, 179, 167])         # 들어올리기 위치
-
-
+    pos_above_dough = posx([328, -107, 213, 174, 179, 175])     # 반죽 위 위치    
+    pos_press_down = posx([328, -107, 95, 174, 179, 175])      # Z축 하강 목표 (충분히 낮게 설정)
+    pos_lift_up = posx([328, -107, 195, 174, 179, 175])         # 들어올리기 위치
 
 
-    pos_shake_up = posx([316, -85, 140, 166, 179, 167])           # 도구 털기 위로 위치
-    pos_shake_down = posx([316, -85, 160, 166, 179, 167])           # 도구 털기 위로 위치
+
+
+    #pos_shake_up = posx([316, -85, 140, 166, 179, 167])           # 도구 털기 위로 위치
+    #pos_shake_down = posx([316, -85, 160, 166, 179, 167])           # 도구 털기 위로 위치
 
     CONTACT_FORCE = 10.0    # 반죽 접촉 감지 힘 임계값 (N)
-    PRESS_FORCE = 200      # 반죽 누르기 힘 (N)
+    PRESS_FORCE = 150      # 반죽 누르기 힘 (N)
     TARGET_HEIGHT = 10   # 누르기 목표 높이 (mm, Z축 절대 위치)
 
     # ===== 1단계: 누르기 도구 위치로 이동 후 그리핑 =====
@@ -204,12 +204,12 @@ def perform_task_press():
 
     # ===== 8단계: 도구 털기 (move_periodic으로 Z축 상하 + X축/Rx축 흔들기 동시 수행) =====
     print("[Step 8] 도구 털기 시작")
-    movel(pos_shake_up, vel=200, acc=ACC)
+    #movel(pos_shake_up, vel=200, acc=ACC)
     # amp: [X, Y, Z, Rx, Ry, Rz] - Z축 상하 20mm + X축 10mm + Rx 0.5도 동시 진동
     # period: 각 축별 주기(초) - Z축은 느리게, X/Rx는 빠르게
     from DSR_ROBOT2 import move_periodic
     move_periodic(amp=[0, 0, 30, 0, 0, 30], period=[0, 0, 1, 0, 0, 1], atime=0.5, repeat=5, ref=DR_TOOL)
-    movel(pos_shake_down, vel=200, acc=ACC)
+    #movel(pos_shake_down, vel=200, acc=ACC)
     print("  -> 털기 완료!")
 
     movel(pos_tool_pickup_1, vel=VELOCITY, acc=ACC)
@@ -218,6 +218,8 @@ def perform_task_press():
     movel(pos_tool_pickup_2, vel=VELOCITY, acc=ACC)
     release_65mm()
     # print("요구사항 3번까지 완료! (릴리스 → 도구 위치 이동 → 그립)")
+
+    movel(pos_tool_pickup_1, vel=VELOCITY, acc=ACC)
 
 
 def main(args=None):

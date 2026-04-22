@@ -99,10 +99,12 @@ def perform_task():
     JReady = [0, 0, 90, 0, 90, 0]                          # 초기 위치
     pick_start_1 = posx([230, 212, 12, 36,-179,36]) #초기 집개 위치
     pick_start_2 = posx([230, 212, 150, 36, -179,36]) #초기 집개 위치2 (z축 상승)
+
     dough_start_1 =  posx([461, 211, 150, 36, -178, 36]) # 반죽 위치
-    dough_start_2 =  posx([461, 211, 17, 36, -178, 36]) # 반죽 위치
-    dough_end_1 = posx([303, -39, 45, 17, -177, 17]) # 반죽 놓기 위치
-    dough_end_2 = posx([303, -39, 150, 17, -177, 17]) # 반죽 놓기 위치 (Z축 상승)
+    dough_start_2 =  posx([461, 211, 12, 36, -178, 36]) # 반죽 위치
+
+    dough_end_1 = posx([323, -19, 38, 17, -177, 17]) # 반죽 놓기 위치
+    dough_end_2 = posx([323, -19, 150, 17, -177, 17]) # 반죽 놓기 위치 (Z축 상승)
 
     # 1. 그리퍼를 릴리스한다
     print("Step 1: 그리퍼 release_90mm 초기화")
@@ -123,14 +125,14 @@ def perform_task():
 
     # 세팅 목적지 전에 필요한 위치 함수 추가
     print("Step 3: pick_start_2로 이동")
-    movel(pick_start_2, vel=VELOCITY, acc=ACC)
+    movel(pick_start_2, vel=200, acc=150)
 
     print("Step 5: dough_start_2로 이동")
-    movel(dough_start_1, vel=150, acc=ACC)
+    movel(dough_start_1, vel=200, acc=150)
 
     # 4. 도우 목적지가 있는 위치로 이동한다
     print("Step 4: dough_start_1로 이동")
-    movel(dough_start_2, vel=150, acc=ACC)
+    movel(dough_start_2, vel=200, acc=150)
 
     # 5. 반죽 그립한다.
     print("Step 5: 반죽 그립")
@@ -156,6 +158,8 @@ def perform_task():
     movel(pick_start_1, vel=200, acc=ACC)
 
     release_90mm()
+
+    movel(pick_start_2, vel=VELOCITY, acc=ACC)
 
     #print("Step 5: dough_start_2로 이동")
     #movel(dough_start_2, vel=150, acc=ACC)

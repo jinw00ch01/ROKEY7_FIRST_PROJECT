@@ -9,8 +9,14 @@ from dsr_msgs2.srv import (
 # 각 작업 파일에서 perform_task 함수 import
 from cobot1.dough_grip_test import perform_task_dough_grip
 from cobot1.press_test import perform_task_press
+from cobot1 import press_test
+from cobot1 import source_test
+from cobot1 import powder_test
 from cobot1.plate_setting_test import perform_task_plate_setting
 from cobot1.spatula_test import perform_task_spatula
+from cobot1.source_test import perform_task_source
+from cobot1.powder_test import perform_task_powder_snap
+
 
 # 로봇 설정 상수
 ROBOT_ID = "dsr01"
@@ -154,12 +160,17 @@ def main(args=None):
     try:
         initialize_robot()
         setup_io_clients(node)
+        press_test.setup_io_clients(node)
+        source_test.setup_io_clients(node)
+        powder_test.setup_io_clients(node)
 
         # 각 파일에서 import한 작업 함수를 순서대로 수행
         perform_task_dough_grip()
         perform_task_press()
         perform_task_plate_setting()
         perform_task_spatula()
+        perform_task_source()
+        perform_task_powder_snap()
 
     except KeyboardInterrupt:
         print("\nNode interrupted by user. Shutting down...")
