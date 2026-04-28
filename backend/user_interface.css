@@ -1,0 +1,673 @@
+/* user_interface.css — 고객 키오스크 UI 스타일 */
+
+/* ==========================================
+   위치 및 사실적 색상/질감 정의 영역
+   ========================================== */
+:root {
+    --griddle-left: 10%;
+    --griddle-top: 15vh;
+    --griddle-width: 35%;
+    --plate-left: 55%;
+    --plate-top: 18vh;
+    --plate-width: 35%;
+    --pancake-griddle-top: 27.5vh;
+    --pancake-griddle-left: 27.5%;
+    --pancake-plate-top: 27vh;
+    --pancake-plate-left: 72.5%;
+    --source-color: transparent;
+    --raw-dough-color: #FFFDE4;
+    --light-gold-color: #FFECB3;
+    --deep-gold-gradient: radial-gradient(circle at center, #FFECB3 0%, #FFA000 60%, #D84315 100%);
+    --pancake-edge-color: #A32D0A;
+    --plate-base-color: #FFFFFF;
+}
+
+/* 기본 설정 및 전체 화면 고정 */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(circle at center, #FFFDE4 0%, #FFDF00 100%);
+    font-family: 'Arial Rounded MT Bold', 'Malgun Gothic', sans-serif;
+    color: #5D4037;
+    position: relative;
+}
+
+/* 반짝이는 요정 가루 애니메이션 */
+.sparkle {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8);
+    animation: twinkle 2s infinite ease-in-out;
+    z-index: 0;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.5); }
+}
+
+/* 페이지 공통 설정 */
+.page {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: none;
+    flex-direction: column;
+    padding: 2vh 4vw;
+    z-index: 1;
+}
+
+.page.active {
+    display: flex;
+    animation: fadeInPage 0.5s ease-out;
+}
+
+@keyframes fadeInPage {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 모서리 홈 아이콘 */
+.home-icon {
+    position: absolute;
+    top: 3vh;
+    left: 4vw;
+    font-size: 3.5vh;
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px solid #FFCA28;
+    border-radius: 50%;
+    width: 7vh;
+    height: 7vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.1s;
+}
+
+.home-icon:active {
+    transform: scale(0.9);
+}
+
+/* 대문 / 옵션 페이지 스타일 */
+#page-welcome {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.welcome-content {
+    animation: bounceIn 1s cubic-bezier(0.36, 1.3, 0.67, 1.22);
+}
+
+@keyframes bounceIn {
+    from { transform: translateY(-50px) scale(0.8); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.fairy-graphic {
+    font-size: 15vh;
+    animation: floatText 3s infinite ease-in-out;
+    margin-bottom: 2vh;
+}
+
+.welcome-title {
+    font-size: 5vh;
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
+    margin-bottom: 5vh;
+    line-height: 1.3;
+    color: #E65100;
+}
+
+.order-btn-group {
+    display: flex;
+    gap: 4vw;
+    width: 80vw;
+    justify-content: center;
+}
+
+.order-btn {
+    background: linear-gradient(135deg, #FFCA28, #FF9800);
+    color: white;
+    border: 3px solid #FFF;
+    border-radius: 30px;
+    padding: 4vh 5vw;
+    font-size: 3.5vh;
+    font-weight: bold;
+    width: 45%;
+    box-shadow: 0 8px 0 #E65100, 0 10px 15px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+
+.order-btn:active {
+    transform: translateY(8px);
+    box-shadow: 0 0 0 #E65100;
+}
+
+.admin-btn {
+    position: absolute;
+    bottom: 2vh;
+    right: 4vw;
+    background: rgba(255, 255, 255, 0.4);
+    color: #E65100;
+    opacity: 0.7;
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-radius: 50%;
+    width: 5vh;
+    height: 5vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5vh;
+    text-decoration: none;
+    transition: all 0.2s;
+    z-index: 110;
+}
+
+#page-options header {
+    display: flex;
+    justify-content: center;
+    height: 15vh;
+    align-items: center;
+}
+
+#page-options h1 {
+    font-size: 4.5vh;
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.7);
+    animation: floatText 3s infinite ease-in-out;
+    color: #E65100;
+}
+
+.option-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    height: 60vh;
+}
+
+.option-group {
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    padding: 2vh 2vw;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+}
+
+.option-title {
+    font-size: 3vh;
+    margin-bottom: 1.5vh;
+    text-align: center;
+    color: #E65100;
+    font-weight: bold;
+}
+
+.radio-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 2vw;
+}
+
+.radio-container label {
+    flex: 1;
+    text-align: center;
+    background: #FFF9C4;
+    border: 3px solid #FFD54F;
+    border-radius: 15px;
+    padding: 2vh 0;
+    font-size: 2.5vh;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.radio-container input[type="radio"] {
+    display: none;
+}
+
+.radio-container input[type="radio"]:checked+label {
+    background: #FFCA28;
+    border-color: #FF8F00;
+    color: #E65100;
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(255, 143, 0, 0.4);
+}
+
+#page-options footer {
+    height: 15vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.start-btn {
+    background: linear-gradient(135deg, #FF9800, #FF5722);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    width: 70vw;
+    height: 9vh;
+    font-size: 3.5vh;
+    font-weight: bold;
+    box-shadow: 0 8px 0 #BF360C, 0 15px 20px rgba(0, 0, 0, 0.15);
+    animation: pulse 1.5s infinite;
+    cursor: pointer;
+}
+
+.start-btn:active {
+    transform: translateY(8px);
+    box-shadow: none;
+}
+
+/* ================= 진행 상황 페이지 (주방 씬) ================= */
+#page-progress {
+    text-align: center;
+    align-items: center;
+}
+
+.status-header {
+    font-size: 3.5vh;
+    color: #E65100;
+    margin-top: 8vh;
+    margin-bottom: 1.5vh;
+    z-index: 10;
+    position: relative;
+}
+
+.status-desc {
+    font-size: 2.5vh;
+    font-weight: bold;
+    background: white;
+    padding: 1.5vh 5vw;
+    border-radius: 20px;
+    color: #5D4037;
+    border: 2px dashed #FF9800;
+    margin-bottom: 2vh;
+    min-width: 60vw;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+    position: relative;
+}
+
+.kitchen-scene {
+    width: 100%;
+    height: 50vh;
+    position: relative;
+    z-index: 1;
+}
+
+/* 그릴 및 사실적인 세라믹 접시 설정 */
+.griddle-frame {
+    position: absolute;
+    left: var(--griddle-left);
+    top: var(--griddle-top);
+    width: var(--griddle-width);
+    height: 25vh;
+    border: 8px solid #444;
+    border-radius: 15px;
+    background: repeating-linear-gradient(to right, #666, #666 2px, #555 2px, #555 4px);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8), 0 10px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.griddle {
+    width: 95%;
+    height: 90%;
+    background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.5) 100%);
+    border-radius: 10px;
+}
+
+/* 사실적인 유광 세라믹 접시 질감 구현 */
+.plate {
+    position: absolute;
+    left: var(--plate-left);
+    top: var(--plate-top);
+    width: var(--plate-width);
+    height: 18vh;
+    background: var(--plate-base-color);
+    border-radius: 50%;
+    border: 1px solid #E0E0E0;
+    box-shadow:
+        inset 0 -8px 15px rgba(0, 0, 0, 0.05),
+        inset 0 15px 15px rgba(255, 255, 255, 0.8),
+        0 12px 20px rgba(0, 0, 0, 0.15),
+        0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 그릴 -> 접시 이동 방향 화살표 애니메이션 */
+.arrow-indicator {
+    position: absolute;
+    left: 47%;
+    top: 22vh;
+    font-size: 5vh;
+    color: #FF9800;
+    font-weight: bold;
+    text-shadow: 2px 2px 0px white;
+    opacity: 0;
+    transition: opacity 0.5s;
+    z-index: 4;
+}
+
+.arrow-indicator.show {
+    opacity: 1;
+    animation: moveArrowBounce 1s infinite alternate ease-in-out;
+}
+
+@keyframes moveArrowBounce {
+    from { transform: translateX(-1vw); }
+    to { transform: translateX(2vw) scale(1.1); }
+}
+
+/* ================= 실사풍 팬케이크 객체 및 애니메이션 설정 ================= */
+.pancake-volumetric {
+    position: absolute;
+    left: var(--pancake-griddle-left);
+    top: var(--pancake-griddle-top);
+    transform: translate(-50%, -50%) scale(0);
+    z-index: 5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+/* 팬케이크 본체 */
+.pancake-body {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: var(--raw-dough-color);
+    transition: all 0.5s, background-color 1s;
+    border: none;
+}
+
+/* 팬케이크 두툼한 측면 */
+.pancake-body::before {
+    content: '';
+    position: absolute;
+    top: 5%;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--pancake-edge-color);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 1s, transform 1s;
+}
+
+/* 상태 클래스 공통: 투명도 유지 */
+.pancake-volumetric.state-drop,
+.pancake-volumetric.state-press,
+.pancake-volumetric.state-flip,
+.pancake-volumetric.state-move {
+    opacity: 1;
+}
+
+/* 1단계: 반죽 '뿅' 애니메이션 & 선명한 3D 구형 반죽 */
+.pancake-volumetric.state-drop {
+    width: 9vw;
+    height: 9vw;
+    animation: pancakeAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.pancake-volumetric.state-drop .pancake-body {
+    background: radial-gradient(circle at 35% 25%, #FFFFFF 0%, #FFFDE4 15%, #FFE082 70%, #D4A373 100%);
+    box-shadow:
+        inset -1.5vw -1.5vw 2.5vw rgba(0, 0, 0, 0.15),
+        inset 1vw 1vw 1.5vw rgba(255, 255, 255, 0.9),
+        0 2vh 2.5vh rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+}
+
+/* 2단계: 누르기 (크기 축소 및 두께 강화) */
+.pancake-volumetric.state-press {
+    width: 18vw;
+    height: 9vh;
+    transition: all 1s;
+}
+
+.pancake-volumetric.state-press .pancake-body {
+    background-color: var(--light-gold-color);
+    background-image: none;
+    box-shadow:
+        0 10px 0 var(--pancake-edge-color),
+        0 15px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* 3단계: 뒤집기 (양쪽 면 깊고 진한 노릇함, 더 두툼하게) */
+.pancake-volumetric.state-flip {
+    animation: flipPancakeReal 1.8s ease-in-out forwards;
+}
+
+.pancake-volumetric.state-flip .pancake-body {
+    background: var(--deep-gold-gradient);
+    box-shadow:
+        0 12px 0 var(--pancake-edge-color),
+        0 20px 25px rgba(0, 0, 0, 0.45);
+}
+
+.pancake-volumetric.state-flip .pancake-body::before {
+    opacity: 1;
+    transform: translateY(8%);
+}
+
+/* 4단계: 접시로 포물선 이동 (최종 크기 및 두께 유지) */
+.pancake-volumetric.state-move {
+    width: 19vw;
+    height: 10vh;
+    animation: moveToPlateReal 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.pancake-volumetric.state-move .pancake-body {
+    background: var(--deep-gold-gradient);
+    box-shadow:
+        0 12px 0 var(--pancake-edge-color),
+        0 20px 25px rgba(0, 0, 0, 0.45);
+}
+
+.pancake-volumetric.state-move .pancake-body::before {
+    opacity: 1;
+    transform: translateY(8%);
+}
+
+/* 애니메이션 @keyframes 정의 */
+@keyframes pancakeAppear {
+    0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    70% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+@keyframes flipPancakeReal {
+    0% { transform: translate(-50%, -50%) rotateX(0deg); }
+    10% { transform: translate(-50%, -50%) rotateX(10deg); }
+    50% { transform: translate(-50%, calc(-50% - 15vh)) rotateX(200deg); }
+    100% { transform: translate(-50%, -50%) rotateX(360deg); width: 19vw; height: 10vh; }
+}
+
+@keyframes moveToPlateReal {
+    0% { top: var(--pancake-griddle-top); left: var(--pancake-griddle-left); transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+    50% { top: calc(var(--pancake-griddle-top) - 15vh); left: 50%; transform: translate(-50%, -50%) scale(1.05) rotate(5deg); }
+    100% { top: var(--pancake-plate-top); left: var(--pancake-plate-left); transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+}
+
+/* 토핑 설정 */
+.source-layer {
+    position: absolute;
+    top: 12%;
+    left: 10%;
+    width: 80%;
+    height: 75%;
+    z-index: 6;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.source-layer path {
+    stroke-dasharray: 350;
+    stroke-dashoffset: 350;
+    transition: stroke-dashoffset 2s ease-in-out;
+    opacity: 0.95;
+}
+
+.source-layer.show path {
+    stroke-dashoffset: 0;
+}
+
+.powder-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 7;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+.powder-particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    animation: fallParticle 0.6s ease-in forwards;
+}
+
+@keyframes fallParticle {
+    0% { transform: translateY(-30px); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(0px); opacity: 0.85; }
+}
+
+@keyframes floatText {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
+/* 모달 설정 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+.modal-overlay.show {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 30px;
+    padding: 4vh 5vw;
+    width: 80vw;
+    max-width: 650px;
+    text-align: center;
+    border: 5px solid;
+    transform: scale(0.8);
+    transition: transform 0.5s cubic-bezier(0.36, 1.3, 0.67, 1.22);
+}
+
+.modal-overlay.show .modal-content {
+    transform: scale(1);
+}
+
+.modal-content.error {
+    border-color: #F44336;
+}
+
+.modal-content.error h2 {
+    color: #D32F2F;
+    font-size: 3.5vh;
+    margin-bottom: 2vh;
+    white-space: nowrap;
+}
+
+.modal-content.error p {
+    font-size: 2.5vh;
+    margin-bottom: 1vh;
+    color: #333;
+}
+
+.modal-content.error .status-msg {
+    font-weight: bold;
+    color: #E64A19;
+    margin-bottom: 3vh;
+}
+
+.modal-content.complete {
+    border-color: #FF9800;
+    background: linear-gradient(135deg, #FFF9C4 0%, #FFFDE4 100%);
+}
+
+.modal-content.complete h2 {
+    color: #E65100;
+    font-size: 4vh;
+    margin-bottom: 1vh;
+    animation: pulse 1s infinite;
+    white-space: nowrap;
+}
+
+.modal-content.complete p {
+    font-size: 3vh;
+    font-weight: bold;
+    color: #5D4037;
+    margin-bottom: 2vh;
+}
+
+.complete-fairy {
+    font-size: 10vh;
+    margin-bottom: 2vh;
+}
+
+.countdown {
+    font-size: 2.5vh;
+    color: #8D6E63;
+    margin-top: 2vh;
+}
+
+.close-btn {
+    background: #FF9800;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 1.5vh 5vw;
+    font-size: 2vh;
+    cursor: pointer;
+    border-bottom: 4px solid #E65100;
+    transition: all 0.1s;
+}
+
+.close-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 2px;
+}

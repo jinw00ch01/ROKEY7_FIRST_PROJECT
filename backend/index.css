@@ -1,0 +1,180 @@
+/* index.css — 관리자 대시보드 스타일 */
+body { font-family: sans-serif; padding: 20px; }
+h1 { color: navy; }
+#monitor-box {
+    border: 1px solid #ccc;
+    padding: 10px;
+    width: 360px;
+    background-color: #f4f4f4;
+}
+.selection-group {
+    margin-top: 16px;
+}
+.selection-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #1f2937;
+}
+.selection-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1em;
+    background-color: white;
+}
+#status-text {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: green;
+}
+#countdown-text {
+    margin-top: 8px;
+    font-size: 1.2em;
+    color: #1f2937;
+}
+#start-button {
+    margin-top: 16px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background-color: #1f6feb;
+    color: white;
+    font-size: 1em;
+    cursor: pointer;
+}
+#start-button:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+}
+#save-status {
+    margin-top: 12px;
+    color: #444;
+    font-size: 0.95em;
+}
+.control-buttons {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+}
+.control-btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: bold;
+}
+#pause-button { background-color: #f59e0b; color: white; }
+#pause-button:disabled { background-color: #fcd34d; cursor: not-allowed; }
+
+#resume-button { background-color: #10b981; color: white; }
+#resume-button:disabled { background-color: #6ee7b7; cursor: not-allowed; }
+
+#simulate-collision-button { background-color: #ef4444; color: white; }
+#simulate-collision-button:disabled { background-color: #fca5a5; cursor: not-allowed; }
+
+/* 안전정지/비상정지 해제 버튼 영역 */
+.safety-buttons {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 2px dashed #e5e7eb;
+}
+.safety-buttons-title {
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #6b7280;
+    margin-bottom: 8px;
+}
+.safety-btn-row {
+    display: flex;
+    gap: 10px;
+}
+#safety-stop-release-button {
+    background-color: #eab308;
+    color: white;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: bold;
+    flex: 1;
+}
+#safety-stop-release-button:disabled { background-color: #fde68a; color: #a3a3a3; cursor: not-allowed; }
+#emergency-stop-release-button {
+    background-color: #dc2626;
+    color: white;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: bold;
+    flex: 1;
+}
+#emergency-stop-release-button:disabled { background-color: #fca5a5; color: #a3a3a3; cursor: not-allowed; }
+
+/* 상태 인디케이터 */
+.status-indicators {
+    margin-top: 12px;
+    display: flex;
+    gap: 12px;
+}
+.indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9em;
+}
+.indicator-light {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+}
+.indicator-light.off { background-color: #e5e7eb; }
+.indicator-light.yellow { background-color: #eab308; box-shadow: 0 0 8px #eab308; border-color: #ca8a04; }
+.indicator-light.red { background-color: #dc2626; box-shadow: 0 0 8px #dc2626; border-color: #b91c1c; }
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+}
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 25px;
+    border-radius: 12px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.modal-content h2 {
+    margin-top: 0;
+}
+.modal-content h2.yellow { color: #ca8a04; }
+.modal-content h2.red { color: #dc2626; }
+.modal-btn {
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    cursor: pointer;
+    margin-top: 20px;
+    width: 100%;
+    font-weight: bold;
+}
+.modal-btn.yellow-btn { background-color: #eab308; }
+.modal-btn.yellow-btn:hover { background-color: #ca8a04; }
+.modal-btn.red-btn { background-color: #dc2626; }
+.modal-btn.red-btn:hover { background-color: #b91c1c; }

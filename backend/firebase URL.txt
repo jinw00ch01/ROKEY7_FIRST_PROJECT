@@ -1,0 +1,19 @@
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDl7RTKYMFTWWhaeIz2QsdrLi-ddx3BA5I",
+    authDomain: "rokey-fe6a9.firebaseapp.com",
+    projectId: "rokey-fe6a9",
+    storageBucket: "rokey-fe6a9.firebasestorage.app",
+    messagingSenderId: "89667570290",
+    appId: "1:89667570290:web:054b7affadc40488b850eb"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+</script>

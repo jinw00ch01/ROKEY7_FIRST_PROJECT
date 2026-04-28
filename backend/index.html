@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>로봇 모니터링 대시보드</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <h1>두산 M0609 공정 모니터링</h1>
+    <a href="user_interface.html" style="display:inline-block; margin-bottom: 20px; padding: 10px 15px; background: #6366f1; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; position: relative; z-index: 2000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">🥞 요정의 팬케이크 공방(고객 화면)으로 돌아가기</a>
+
+    <div id="monitor-box">
+        <p>현재 상태:</p>
+        <span id="status-text">...로딩 중...</span>
+        <p id="countdown-text">남은 시간: -</p>
+        <div class="selection-group">
+            <label for="source-select">소스 선택</label>
+            <select id="source-select">
+                <option value="선택없음">선택없음</option>
+                <option value="블루베리맛 소스">블루베리맛 소스</option>
+            </select>
+        </div>
+        <div class="selection-group">
+            <label for="powder-select">가루 선택</label>
+            <select id="powder-select">
+                <option value="선택없음">선택없음</option>
+                <option value="팝핑 캔디 가루">팝핑 캔디 가루</option>
+            </select>
+        </div>
+        <div>
+            <button id="start-button" type="button">시작</button>
+            <div class="control-buttons">
+                <button id="pause-button" class="control-btn" type="button" disabled>일시 정지</button>
+                <button id="resume-button" class="control-btn" type="button" disabled>재개</button>
+
+            </div>
+
+            <!-- 상태 인디케이터 -->
+            <div class="status-indicators">
+                <div class="indicator">
+                    <div id="safety-light" class="indicator-light off"></div>
+                    <span>안전정지 (노란불)</span>
+                </div>
+                <div class="indicator">
+                    <div id="emergency-light" class="indicator-light off"></div>
+                    <span>비상정지 (빨간불)</span>
+                </div>
+            </div>
+
+            <!-- 안전정지/비상정지 해제 버튼 -->
+            <div class="safety-buttons">
+                <div class="safety-buttons-title">안전 제어</div>
+                <div class="safety-btn-row">
+                    <button id="safety-stop-release-button" type="button" disabled>안전정지(노란불) 해제</button>
+                    <button id="emergency-stop-release-button" type="button" disabled>비상정지(빨간불) 해제</button>
+                </div>
+            </div>
+
+            <p id="selected-summary">현재 선택: 소스 선택없음 / 가루 선택없음</p>
+            <p id="save-status">버튼을 누르면 Python으로 시작 요청을 보냅니다.</p>
+        </div>
+    </div>
+
+    <!-- 안전정지 팝업 (노란불) -->
+    <div id="safety-stop-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="yellow">안전정지 발생 (노란불)</h2>
+            <p>로봇에 보호정지(Protective Stop)가 발생했습니다.</p>
+            <p>안전 상태를 확인한 후 해제 버튼을 눌러주세요.</p>
+            <button class="modal-btn yellow-btn" onclick="sendControlRequest('release_safety_stop'); document.getElementById('safety-stop-modal').style.display='none';">안전정지 해제</button>
+        </div>
+    </div>
+
+    <!-- 비상정지 팝업 (빨간불) -->
+    <div id="emergency-stop-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="red">비상정지 발생 (빨간불)</h2>
+            <p>로봇에 비상정지(Emergency Stop)가 발생했습니다.</p>
+            <p>물리적 비상정지 버튼을 해제한 후 아래 버튼을 눌러주세요.</p>
+            <button class="modal-btn red-btn" onclick="sendControlRequest('release_emergency_stop'); document.getElementById('emergency-stop-modal').style.display='none';">비상정지 해제</button>
+        </div>
+    </div>
+
+    <!-- 충돌 팝업 (모달) -->
+    <div id="collision-modal" class="modal">
+        <div class="modal-content">
+            <h2 class="red">충돌 감지</h2>
+            <p>로봇에 충돌이 발생하여 동작이 중지되었습니다.</p>
+            <button class="modal-btn red-btn" id="collision-resume-button">충돌 해제 및 재개</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // 2. 1단계 4번에서 복사한 firebaseConfig 붙여넣기
+        const firebaseConfig = {
+            apiKey: "AIzaSyDl7RTKYMFTWWhaeIz2QsdrLi-ddx3BA5I",
+            authDomain: "rokey-fe6a9.firebaseapp.com",
+            databaseURL: "https://rokey-fe6a9-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "rokey-fe6a9",
+            storageBucket: "rokey-fe6a9.firebasestorage.app",
+            messagingSenderId: "89667570290",
+            appId: "1:89667570290:web:054b7affadc40488b850eb"
+        };
+        // Firebase 앱 초기화
+        firebase.initializeApp(firebaseConfig);
+
+        // 3. Realtime Database 참조 가져오기
+        const database = firebase.database();
+        
+        const statusTextRef = database.ref('robot_status/status_text');
+        const isRunningRef = database.ref('robot_status/is_running');
+        const isPausedRef = database.ref('robot_status/is_paused');
+        const isCollidedRef = database.ref('robot_status/is_collided');
+        const isSafetyStoppedRef = database.ref('robot_status/is_safety_stopped');
+        const isEmergencyStoppedRef = database.ref('robot_status/is_emergency_stopped');
+        const remainingSecondsRef = database.ref('robot_status/remaining_seconds');
+
+        const requestQueueRef = database.ref('robot_commands/start_requests');
+        const controlQueueRef = database.ref('robot_commands/control_requests');
+
+        const startButton = document.getElementById('start-button');
+        const pauseButton = document.getElementById('pause-button');
+        const resumeButton = document.getElementById('resume-button');
+        const safetyStopReleaseButton = document.getElementById('safety-stop-release-button');
+        const emergencyStopReleaseButton = document.getElementById('emergency-stop-release-button');
+        const collisionModal = document.getElementById('collision-modal');
+        const safetyStopModal = document.getElementById('safety-stop-modal');
+        const emergencyStopModal = document.getElementById('emergency-stop-modal');
+        const collisionResumeButton = document.getElementById('collision-resume-button');
+        const safetyLight = document.getElementById('safety-light');
+        const emergencyLight = document.getElementById('emergency-light');
+
+        const saveStatus = document.getElementById('save-status');
+        const countdownText = document.getElementById('countdown-text');
+        const sourceSelect = document.getElementById('source-select');
+        const powderSelect = document.getElementById('powder-select');
+        const selectedSummary = document.getElementById('selected-summary');
+
+        let currentIsRunning = false;
+        let currentIsPaused = false;
+        let currentIsCollided = false;
+        let currentIsSafetyStopped = false;
+        let currentIsEmergencyStopped = false;
+
+        function updateButtonStates() {
+            const isBusy = currentIsRunning || currentIsCollided || currentIsSafetyStopped || currentIsEmergencyStopped;
+            startButton.disabled = isBusy;
+            sourceSelect.disabled = isBusy;
+            powderSelect.disabled = isBusy;
+
+            pauseButton.disabled = !currentIsRunning || currentIsPaused || currentIsCollided || currentIsSafetyStopped || currentIsEmergencyStopped;
+            resumeButton.disabled = !currentIsRunning || !currentIsPaused || currentIsCollided || currentIsSafetyStopped || currentIsEmergencyStopped;
+
+            // 안전정지/비상정지 해제 버튼: 해당 상태일 때만 활성화
+            safetyStopReleaseButton.disabled = !currentIsSafetyStopped;
+            emergencyStopReleaseButton.disabled = !currentIsEmergencyStopped;
+
+            // 인디케이터 라이트 업데이트
+            safetyLight.className = 'indicator-light ' + (currentIsSafetyStopped ? 'yellow' : 'off');
+            emergencyLight.className = 'indicator-light ' + (currentIsEmergencyStopped ? 'red' : 'off');
+
+            if (currentIsEmergencyStopped) {
+                saveStatus.innerText = '비상정지(빨간불) 발생! 물리적 E-Stop 해제 후 비상정지 해제 버튼을 눌러주세요.';
+            } else if (currentIsSafetyStopped) {
+                saveStatus.innerText = '안전정지(노란불) 발생! 안전 확인 후 해제 버튼을 눌러주세요.';
+            } else if (currentIsCollided) {
+                saveStatus.innerText = '충돌이 감지되었습니다. 팝업에서 해제해주세요.';
+            } else if (currentIsPaused) {
+                saveStatus.innerText = '일시 정지 중입니다. 재개 버튼을 눌러주세요.';
+            } else if (currentIsRunning) {
+                saveStatus.innerText = '현재 작동 중입니다. 작동이 끝날 때까지 기다려주세요.';
+            } else {
+                saveStatus.innerText = '버튼을 누르면 Python으로 시작 요청을 보냅니다.';
+            }
+        }
+
+        function updateSelectionSummary() {
+            selectedSummary.innerText = `현재 선택: 소스 ${sourceSelect.value} / 가루 ${powderSelect.value}`;
+        }
+
+        statusTextRef.on('value', (snapshot) => {
+            const statusText = snapshot.val() || '대기 중';
+            document.getElementById('status-text').innerText = statusText;
+        });
+
+        remainingSecondsRef.on('value', (snapshot) => {
+            const remainingSeconds = snapshot.val();
+            countdownText.innerText = remainingSeconds > 0
+                ? `남은 시간: ${remainingSeconds}초`
+                : '남은 시간: -';
+        });
+
+        isRunningRef.on('value', (snapshot) => {
+            currentIsRunning = Boolean(snapshot.val());
+            updateButtonStates();
+        });
+
+        isPausedRef.on('value', (snapshot) => {
+            currentIsPaused = Boolean(snapshot.val());
+            updateButtonStates();
+        });
+
+        isCollidedRef.on('value', (snapshot) => {
+            currentIsCollided = Boolean(snapshot.val());
+            if (currentIsCollided) {
+                collisionModal.style.display = 'block';
+                // 충돌 모달이 우선 — 안전정지 모달 숨김
+                safetyStopModal.style.display = 'none';
+            } else {
+                collisionModal.style.display = 'none';
+            }
+            updateButtonStates();
+        });
+
+        isSafetyStoppedRef.on('value', (snapshot) => {
+            currentIsSafetyStopped = Boolean(snapshot.val());
+            // 충돌 모달이 이미 표시 중이면 안전정지 모달 숨김 (충돌 모달이 우선)
+            if (currentIsSafetyStopped && !currentIsCollided) {
+                safetyStopModal.style.display = 'block';
+            } else {
+                safetyStopModal.style.display = 'none';
+            }
+            updateButtonStates();
+        });
+
+        isEmergencyStoppedRef.on('value', (snapshot) => {
+            currentIsEmergencyStopped = Boolean(snapshot.val());
+            if (currentIsEmergencyStopped) {
+                emergencyStopModal.style.display = 'block';
+            } else {
+                emergencyStopModal.style.display = 'none';
+            }
+            updateButtonStates();
+        });
+
+        // Function to send control requests
+        async function sendControlRequest(command) {
+            try {
+                await controlQueueRef.push({
+                    command: command,
+                    requested_at: firebase.database.ServerValue.TIMESTAMP,
+                    source: 'web-button'
+                });
+            } catch (error) {
+                console.error('명령 전송 실패:', error);
+                alert('명령 전송에 실패했습니다.');
+            }
+        }
+
+        pauseButton.addEventListener('click', () => sendControlRequest('pause'));
+        resumeButton.addEventListener('click', () => sendControlRequest('resume'));
+        collisionResumeButton.addEventListener('click', () => sendControlRequest('resume_collision'));
+        safetyStopReleaseButton.addEventListener('click', () => sendControlRequest('release_safety_stop'));
+        emergencyStopReleaseButton.addEventListener('click', () => sendControlRequest('release_emergency_stop'));
+
+        sourceSelect.addEventListener('change', updateSelectionSummary);
+        powderSelect.addEventListener('change', updateSelectionSummary);
+        updateSelectionSummary();
+
+        startButton.addEventListener('click', async () => {
+            startButton.disabled = true;
+            saveStatus.innerText = '시작 요청을 전송하는 중입니다...';
+
+            try {
+                await requestQueueRef.push({
+                    source: sourceSelect.value,
+                    powder: powderSelect.value,
+                    requested_at: firebase.database.ServerValue.TIMESTAMP,
+                    source: 'web-button'
+                });
+                saveStatus.innerText = '선택값과 함께 시작 요청을 전송했습니다. Python이 곧 작동 상태로 바꿉니다.';
+            } catch (error) {
+                console.error('데이터 저장 실패:', error);
+                saveStatus.innerText = '요청 전송에 실패했습니다. Firebase 규칙을 확인해주세요.';
+                startButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

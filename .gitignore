@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# ROS2 build
+build/
+install/
+log/
+
+# IDE
+.vscode/
+
+# Firebase 인증 키 (절대 커밋하면 안됨)
+*.json
+!package.json
+
+# OS
+.DS_Store
+
+# Claude
+.claude/

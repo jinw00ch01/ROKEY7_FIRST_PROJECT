@@ -1,0 +1,4 @@
+# Python 의존성 — pip로 설치
+# (ROS2 패키지: rclpy, std_msgs, std_srvs, dsr_msgs2, DR_init은 ROS2 Humble + doosan-robot2에 포함)
+
+firebase-admin>=6.0.0

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>요정의 팬케이크 공방</title>
+    <link rel="stylesheet" href="user_interface.css">
+</head>
+
+<body>
+
+    <svg style="position: absolute; width: 0; height: 0;">
+        <defs>
+            <filter id="glossy-source" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="2" stdDeviation="1.5" flood-color="#000" flood-opacity="0.3" result="shadow" />
+                <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
+                <feSpecularLighting in="blur" specularExponent="40" lighting-color="#ffffff" result="specular">
+                    <fePointLight x="20" y="-20" z="40" />
+                </feSpecularLighting>
+                <feComposite in="specular" in2="SourceAlpha" operator="in" result="specular" />
+                <feMerge>
+                    <feMergeNode in="shadow" />
+                    <feMergeNode in="SourceGraphic" />
+                    <feMergeNode in="specular" />
+                </feMerge>
+            </filter>
+        </defs>
+    </svg>
+
+    <script>
+        for (let i = 0; i < 15; i++) {
+            let sparkle = document.createElement('div'); sparkle.className = 'sparkle';
+            sparkle.style.width = Math.random() * 8 + 4 + 'px'; sparkle.style.height = sparkle.style.width;
+            sparkle.style.top = Math.random() * 100 + 'vh'; sparkle.style.left = Math.random() * 100 + 'vw';
+            sparkle.style.animationDelay = Math.random() * 2 + 's'; document.body.appendChild(sparkle);
+        }
+    </script>
+
+    <div id="page-welcome" class="page active">
+        <div class="welcome-content">
+            <div class="fairy-graphic">
+                <img src="팬케이크요정.png?v=2" alt="팬케이크 요정" style="height: 28vh; object-fit: contain; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));">
+            </div>
+            <h1 class="welcome-title">요정의 팬케이크 공방<br>환영합니다!</h1>
+            <div class="order-btn-group">
+                <button class="order-btn" onclick="selectOrderType('먹고가기')">🍽️<br>먹고가기</button>
+                <button class="order-btn" onclick="selectOrderType('포장하기')">🛍️<br>포장하기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-options" class="page">
+        <button class="home-icon" onclick="goHome()">🏠</button>
+        <header>
+            <h1>토핑을 골라주세요!</h1>
+        </header>
+        <main class="option-main">
+            <div class="option-group">
+                <div class="option-title">시럽 요정의 선택 🍯</div>
+                <div class="radio-container">
+                    <input type="radio" id="source-none" name="source" value="none" checked><label
+                        for="source-none">선택없음</label>
+                    <input type="radio" id="source-1" name="source" value="source1"><label for="source-1">블루베리맛 소스</label>
+                </div>
+            </div>
+            <div class="option-group">
+                <div class="option-title">마법 가루 선택 🪄✨</div>
+                <div class="radio-container">
+                    <input type="radio" id="powder-none" name="powder" value="none" checked><label
+                        for="powder-none">선택없음</label>
+                    <input type="radio" id="powder-1" name="powder" value="powder1"><label for="powder-1">팝핑 캔디 가루</label>
+                </div>
+            </div>
+        </main>
+        <footer><button class="start-btn" onclick="startBaking()">팬케이크 굽기 시작! ✨</button></footer>
+    </div>
+
+    <div id="page-progress" class="page">
+        <button class="home-icon" onclick="goHome()">🏠</button>
+        <h2 class="status-header">요정들이 일하고 있어요!</h2>
+        <div id="status-text" class="status-desc">주문 확인 중...</div>
+
+        <div class="kitchen-scene">
+            <div class="griddle-frame">
+                <div class="griddle"></div>
+            </div>
+            <div class="arrow-indicator" id="move-arrow">➡️</div>
+            <div class="plate"></div>
+
+            <div id="pancake-container" class="pancake-volumetric">
+                <div class="pancake-body">
+                    <svg id="source-layer" class="source-layer" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path id="source-path"
+                            d="M 15 20 C 35 5, 65 5, 85 20 C 65 40, 35 40, 15 40 C 35 60, 65 60, 85 60 C 65 80, 35 80, 15 80"
+                            fill="none" stroke="var(--source-color)" stroke-width="7" stroke-linecap="round"
+                            stroke-linejoin="round" filter="url(#glossy-source)" />
+                    </svg>
+                    <div id="powder-layer" class="powder-layer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="errorModal">
+        <div class="modal-content error">
+            <h2>⚠️ 앗, 오류 발생!</h2>
+            <p>기계 요정에게 문제가 생겼어요.</p>
+            <p class="status-msg" id="errorStatusText">상태: 알 수 없는 오류</p>
+            <p>관리자에게 문의해주세요.</p>
+            <button class="close-btn" onclick="closeError()">닫기</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="completeModal">
+        <div class="modal-content complete">
+            <h2>✨ 짠! 완성! ✨</h2>
+            <div class="complete-fairy">
+                <img src="팬케이크요정.png?v=2" alt="완성 요정" style="height: 22vh; object-fit: contain; filter: drop-shadow(0 8px 10px rgba(0,0,0,0.15));">
+            </div>
+            <p>요정의 팬케이크가 준비되었어요!</p>
+            <button class="close-btn" onclick="goHome()">맛있게 먹기!</button>
+            <div class="countdown" id="countdown-text">30초 후 자동으로 홈화면으로 이동합니다.</div>
+        </div>
+    </div>
+
+    <!-- 모든 페이지에서 고정적으로 보이는 관리자 버튼 -->
+    <a href="index.html" class="admin-btn">⚙️</a>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDl7RTKYMFTWWhaeIz2QsdrLi-ddx3BA5I",
+            authDomain: "rokey-fe6a9.firebaseapp.com",
+            databaseURL: "https://rokey-fe6a9-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "rokey-fe6a9",
+            storageBucket: "rokey-fe6a9.firebasestorage.app",
+            messagingSenderId: "89667570290",
+            appId: "1:89667570290:web:054b7affadc40488b850eb"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const statusTextRef = database.ref('robot_status/status_text');
+        const isCollidedRef = database.ref('robot_status/is_collided');
+        const isPausedRef = database.ref('robot_status/is_paused');
+        const isSafetyStoppedRef = database.ref('robot_status/is_safety_stopped');
+        const isEmergencyStoppedRef = database.ref('robot_status/is_emergency_stopped');
+        const requestQueueRef = database.ref('robot_commands/start_requests');
+
+        // --- TTS 기능 구현 ---
+        let lastSpokenTask = null;
+        let lastSpokenStatus = null;
+
+        function speak(text) {
+            // 이전 음성 중단
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function initTTS() {
+            lastSpokenTask = null;
+            lastSpokenStatus = null;
+            window.speechSynthesis.cancel();
+        }
+
+        // 주문 방식 선택 시 안내
+        function selectOrderType(type) {
+            speak(`${type}를 선택하셨습니다. 시럽과 파우더를 선택하신 후 아래 팬케이크 굽기 시작 버튼을 눌러주세요.`);
+            goToPage('page-options');
+        }
+
+        // 토핑 선택 시 안내 (이벤트 위임 사용)
+        document.addEventListener('change', (e) => {
+            if (e.target.name === 'source' || e.target.name === 'powder') {
+                const label = document.querySelector(`label[for="${e.target.id}"]`);
+                if (label) speak(label.innerText);
+            }
+        });
+        // ----------------------
+
+        function goToPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            localStorage.setItem('currentPage', pageId); // 현재 페이지 상태 저장
+        }
+
+        // 페이지 열 때: 로봇 작동 중이면 진행 화면 복원, 아니면 홈으로 시작
+        window.addEventListener('DOMContentLoaded', () => {
+            initTTS();
+            // Firebase에서 is_running 상태를 한 번 읽어 복원 여부 결정
+            database.ref('robot_status/is_running').once('value', (snapshot) => {
+                const running = Boolean(snapshot.val());
+                if (running && localStorage.getItem('currentPage') === 'page-progress') {
+                    // 진행 중이던 상태 복원
+                    goToPage('page-progress');
+                    window.selectedSource = localStorage.getItem('selectedSource') || 'none';
+                    window.selectedPowder = localStorage.getItem('selectedPowder') || 'none';
+                    window.hasCompleted = false;
+
+                    const pancake = document.getElementById('pancake-container');
+                    const arrow = document.getElementById('move-arrow');
+                    const savedPancakeState = localStorage.getItem('pancakeState');
+                    const savedArrowState = localStorage.getItem('arrowState');
+
+                    if (savedPancakeState) pancake.className = savedPancakeState;
+                    if (savedArrowState === 'show') arrow.classList.add('show');
+
+                    // 소스/파우더 레이어 복원
+                    const sourceLayer = document.getElementById('source-layer');
+                    const powderLayer = document.getElementById('powder-layer');
+                    const savedStep = localStorage.getItem('stepText') || '';
+                    if (savedStep.includes('소스')) {
+                        if (window.selectedSource === 'source1') {
+                            document.documentElement.style.setProperty('--source-color', '#4A148C');
+                        }
+                        sourceLayer.classList.add('show');
+                    }
+                    if (savedStep.includes('가루') || savedStep.includes('마법')) {
+                        sprinklePowder(powderLayer, '#FF6F61');
+                    }
+                } else {
+                    // 작동 중이 아니면 홈 화면으로 초기화
+                    localStorage.removeItem('currentPage');
+                    localStorage.removeItem('selectedSource');
+                    localStorage.removeItem('selectedPowder');
+                    localStorage.removeItem('pancakeState');
+                    localStorage.removeItem('arrowState');
+                    localStorage.removeItem('stepText');
+                }
+            });
+        });
+
+        function goHome() {
+            localStorage.removeItem('currentPage');
+            localStorage.removeItem('selectedSource');
+            localStorage.removeItem('selectedPowder');
+            localStorage.removeItem('pancakeState');
+            localStorage.removeItem('arrowState');
+            localStorage.removeItem('stepText');
+            initTTS();
+            location.reload();
+        }
+
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        function sprinklePowder(layerElement, colorCode) {
+            layerElement.innerHTML = '';
+            for (let i = 0; i < 45; i++) {
+                let particle = document.createElement('div');
+                particle.className = 'powder-particle';
+                particle.style.backgroundColor = colorCode;
+                let size = Math.random() * 6 + 4 + 'px';
+                particle.style.width = size; particle.style.height = size;
+                particle.style.left = Math.random() * 80 + 10 + '%'; particle.style.top = Math.random() * 80 + 10 + '%';
+                particle.style.animationDelay = (Math.random() * 1.5) + 's';
+                layerElement.appendChild(particle);
+            }
+        }
+
+        async function startBaking() {
+            const source = document.querySelector('input[name="source"]:checked').value;
+            const powder = document.querySelector('input[name="powder"]:checked').value;
+
+            // 로봇에 시작 요청 전송
+            try {
+                await requestQueueRef.push({
+                    source: source === 'source1' ? '블루베리맛 소스' : '선택없음',
+                    powder: powder === 'powder1' ? '팝핑 캔디 가루' : '선택없음',
+                    requested_at: firebase.database.ServerValue.TIMESTAMP,
+                    requested_from: 'user-kiosk'
+                });
+            } catch (error) {
+                console.error('요청 전송 실패:', error);
+                alert('로봇에 요청을 보내지 못했습니다.');
+                return;
+            }
+
+            goToPage('page-progress');
+
+            // UI 초기화
+            const pancake = document.getElementById('pancake-container');
+            const arrow = document.getElementById('move-arrow');
+            const sourceLayer = document.getElementById('source-layer');
+            const powderLayer = document.getElementById('powder-layer');
+
+            pancake.className = 'pancake-volumetric';
+            sourceLayer.classList.remove('show');
+            powderLayer.innerHTML = '';
+            arrow.classList.remove('show');
+
+            // 나중에 완료 애니메이션에서 쓰기 위해 저장
+            window.selectedSource = source;
+            window.selectedPowder = powder;
+            localStorage.setItem('selectedSource', source);
+            localStorage.setItem('selectedPowder', powder);
+            window.hasCompleted = false;
+        }
+
+        // 파이어베이스 상태 텍스트 연동 및 애니메이션 동기화
+        statusTextRef.on('value', async (snapshot) => {
+            const text = snapshot.val() || '';
+            const statusTextEl = document.getElementById('status-text');
+            const pancake = document.getElementById('pancake-container');
+            const arrow = document.getElementById('move-arrow');
+            const sourceLayer = document.getElementById('source-layer');
+            const powderLayer = document.getElementById('powder-layer');
+
+            if (!document.getElementById('page-progress').classList.contains('active')) return;
+
+            // 텍스트에 맞춰 귀여운 멘트로 치환하고 CSS 애니메이션 클래스 트리거
+            if (text.includes("비상정지")) {
+                statusTextEl.innerText = "비상정지가 발생했어요! 관리자가 처리 중이에요...";
+            } else if (text.includes("안전정지")) {
+                statusTextEl.innerText = "안전을 위해 잠시 멈췄어요. 곧 다시 시작할게요!";
+            } else if (text.includes("충돌") && !text.includes("재개")) {
+                statusTextEl.innerText = "기계 요정에게 충돌이 발생했어요 🚨";
+            } else if (text.includes("일시 정지")) {
+                statusTextEl.innerText = "요정들이 잠시 쉬고 있어요 ⏸️";
+            } else if (text.includes("작업 1")) {
+                statusTextEl.innerText = "반죽을 가져 오고 있어요 🥣";
+                if (lastSpokenTask !== 1) {
+                    speak("팬케이크 반죽을 조리 위치로 옮기고 있습니다.");
+                    lastSpokenTask = 1;
+                }
+                pancake.className = 'pancake-volumetric state-drop';
+                localStorage.setItem('pancakeState', pancake.className);
+                localStorage.setItem('stepText', statusTextEl.innerText);
+            } else if (text.includes("작업 2")) {
+                statusTextEl.innerText = "반죽을 누르고 있어요 🥞";
+                if (lastSpokenTask !== 2) {
+                    speak("팬케이크 반죽을 평평하게 누르고 있습니다.");
+                    lastSpokenTask = 2;
+                }
+                pancake.className = 'pancake-volumetric state-drop state-press';
+                localStorage.setItem('pancakeState', pancake.className);
+                localStorage.setItem('stepText', statusTextEl.innerText);
+            } else if (text.includes("작업 3")) {
+                statusTextEl.innerText = "반죽을 뒤집고 있어요 🍳";
+                if (lastSpokenTask !== 3) {
+                    speak("팬케이크를 맛있게 뒤집고 있습니다.");
+                    lastSpokenTask = 3;
+                }
+                pancake.className = 'pancake-volumetric state-drop state-press state-flip';
+                localStorage.setItem('pancakeState', pancake.className);
+                localStorage.setItem('stepText', statusTextEl.innerText);
+            } else if (text.includes("작업 4")) {
+                statusTextEl.innerText = "완성된 팬케이크가 접시로 이동하고 있어요🍽️";
+                if (lastSpokenTask !== 4) {
+                    speak("잘 구워진 팬케이크를 접시로 옮기고 있습니다.");
+                    lastSpokenTask = 4;
+                }
+                pancake.className = 'pancake-volumetric state-drop state-press state-flip';
+                localStorage.setItem('pancakeState', pancake.className);
+                localStorage.setItem('stepText', statusTextEl.innerText);
+                setTimeout(() => {
+                    if (document.getElementById('page-progress').classList.contains('active')) {
+                        arrow.classList.add('show');
+                        pancake.className = 'pancake-volumetric state-move';
+                        localStorage.setItem('pancakeState', pancake.className);
+                        localStorage.setItem('arrowState', 'show');
+                    }
+                }, 1800); // 뒤집기 후 1.8초 뒤 이동
+            } else if (text.includes("작업 5")) {
+                arrow.classList.remove('show');
+                statusTextEl.innerText = "선택하신 소스를 뿌리고 있어요 🍯";
+                if (lastSpokenTask !== 5) {
+                    speak("선택하신 소스를 맛있게 뿌리고 있습니다.");
+                    lastSpokenTask = 5;
+                }
+                if (window.selectedSource === 'source1') document.documentElement.style.setProperty('--source-color', '#4A148C');
+                sourceLayer.classList.add('show');
+                localStorage.setItem('stepText', statusTextEl.innerText);
+            } else if (text.includes("작업 6")) {
+                statusTextEl.innerText = "선택하신 마법 가루를 솔솔 뿌리는 중이에요 🪄✨";
+                let powderColor = '#FF6F61';  // 팝핑 캔디 색상
+                if (lastSpokenTask !== 6) {
+                    speak("선택하신 파우더를 맛있게 뿌리고 있습니다.");
+                    lastSpokenTask = 6;
+                }
+                sprinklePowder(powderLayer, powderColor);
+                localStorage.setItem('stepText', statusTextEl.innerText);
+            } else if (text.includes("작동 중") || text.includes("재개")) {
+                const savedStepText = localStorage.getItem('stepText');
+                if (savedStepText) {
+                    statusTextEl.innerText = savedStepText;
+                } else {
+                    statusTextEl.innerText = "요정들이 요리를 준비하고 있어요! 🧚‍♀️";
+                }
+            } else if (text.includes("완료") && !window.hasCompleted) {
+                window.hasCompleted = true;
+                setTimeout(async () => {
+                    arrow.classList.remove('show');
+                    statusTextEl.innerText = "✨ 맛있는 요정 팬케이크 완성! ✨";
+                    if (lastSpokenTask !== 'complete') {
+                        speak("따끈따끈한 팬케이크가 완성되었습니다! 맛있게 드세요!");
+                        lastSpokenTask = 'complete';
+                    }
+                    await delay(1000);
+                    showCompleteModal();
+                }, 1500); // 이동 애니메이션을 마칠 시간을 벌어줌
+            }
+        });
+
+        // 안전정지(노란불) 감지 연동
+        isSafetyStoppedRef.on('value', (snapshot) => {
+            const stopped = Boolean(snapshot.val());
+            const errorModal = document.getElementById('errorModal');
+            const statusTextEl = document.getElementById('status-text');
+            if (stopped) {
+                document.getElementById('errorStatusText').innerText = "상태: 안전정지 발생 (노란불)";
+                errorModal.classList.add('show');
+                document.getElementById('pancake-container').style.animationPlayState = 'paused';
+                if (statusTextEl) statusTextEl.innerText = "안전을 위해 잠시 멈췄어요!";
+            }
+        });
+
+        // 비상정지(빨간불) 감지 연동
+        isEmergencyStoppedRef.on('value', (snapshot) => {
+            const stopped = Boolean(snapshot.val());
+            const errorModal = document.getElementById('errorModal');
+            const statusTextEl = document.getElementById('status-text');
+            if (stopped) {
+                document.getElementById('errorStatusText').innerText = "상태: 비상정지 발생 (빨간불)";
+                errorModal.classList.add('show');
+                document.getElementById('pancake-container').style.animationPlayState = 'paused';
+                if (statusTextEl) statusTextEl.innerText = "비상정지가 발생했어요!";
+            }
+        });
+
+        // 충돌 감지 연동
+        isCollidedRef.on('value', (snapshot) => {
+            const collided = Boolean(snapshot.val());
+            const errorModal = document.getElementById('errorModal');
+            const statusTextEl = document.getElementById('status-text');
+
+            if (collided) {
+                document.getElementById('errorStatusText').innerText = "상태: 충돌 감지됨 (안전정지)";
+                errorModal.classList.add('show');
+                // 애니메이션 즉시 멈춤
+                document.getElementById('pancake-container').style.animationPlayState = 'paused';
+                if (statusTextEl) statusTextEl.innerText = "🚨 충돌이 감지되어 중단되었습니다!";
+                
+                if (lastSpokenStatus !== 'collided') {
+                    speak("주의하세요! 로봇에 충돌이 감지되어 안전을 위해 정지했습니다.");
+                    lastSpokenStatus = 'collided';
+                }
+            } else {
+                errorModal.classList.remove('show');
+                // 충돌 해제 후 애니메이션 재개
+                document.getElementById('pancake-container').style.animationPlayState = 'running';
+            }
+        });
+
+        // 일시정지 애니메이션 멈춤 연동
+        isPausedRef.on('value', (snapshot) => {
+            const paused = Boolean(snapshot.val());
+            const pancake = document.getElementById('pancake-container');
+            const arrow = document.getElementById('move-arrow');
+            if (paused) {
+                pancake.style.animationPlayState = 'paused';
+                if (arrow) arrow.style.animationPlayState = 'paused';
+                if (lastSpokenStatus !== 'paused' && !collided) {
+                    speak("조리를 잠시 멈췄습니다. 다시 시작하려면 시작 버튼을 눌러주세요.");
+                    lastSpokenStatus = 'paused';
+                }
+            } else {
+                pancake.style.animationPlayState = 'running';
+                if (arrow) arrow.style.animationPlayState = 'running';
+                if (lastSpokenStatus === 'paused' || lastSpokenStatus === 'collided') lastSpokenStatus = 'running';
+            }
+        });
+
+        let countdownInterval;
+        function showCompleteModal() {
+            const modal = document.getElementById('completeModal');
+            const countdownText = document.getElementById('countdown-text');
+            modal.classList.add('show');
+            let timeLeft = 30; countdownText.innerText = `${timeLeft}초 후 자동으로 홈화면으로 이동합니다.`;
+            countdownInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) { countdownText.innerText = `${timeLeft}초 후 자동으로 홈화면으로 이동합니다.`; }
+                else { clearInterval(countdownInterval); goHome(); }
+            }, 1000);
+        }
+
+        function closeError() {
+            // 에러 모달만 닫음 — 실제 복구는 관리자 페이지(index.html)에서 처리
+            document.getElementById('errorModal').classList.remove('show');
+        }
+    </script>
+</body>
+
+</html>
